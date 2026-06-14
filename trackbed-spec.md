@@ -171,9 +171,3 @@ Honors the `adr_mode` passed by the caller: **`read`** (default) = steps 1–2 o
   - **OpenCode** — reads `~/.claude/skills/` natively (or its own `~/.config/opencode/skills/`); command copied to `~/.config/opencode/commands/trackbed.md`.
   - **GitHub Copilot CLI** — skills at `~/.copilot/skills/`; no command file (a skill is its own slash command). Uses its own skill copy because the executor reference differs.
 - In this repo each runtime has its own surface: `claude/` (skills + command), `opencode/` (command only — skills shared with `claude/`), and `copilot/` (its own adapted skill copy). The spec lives at `trackbed/trackbed-spec.md`. Installation into the runtimes is handled by `install.sh` (interactive runtime selection), which is install-time plumbing only and does not violate the skills-only rule.
-
-## 8. Out of scope (parked)
-
-- QML visualization (DAG / Gantt lenses) — see the idea brief, "later, if it earns it."
-- Acme App integration — Trackbed ships standalone first; the app can read the same files later.
-- Pulling actuals from Jira (sprint dates) for a real Gantt.
