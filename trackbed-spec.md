@@ -28,7 +28,7 @@ Every roadmap hangs off an **anchor** (recorded in the manifest as `anchor`):
 
 ## 2. Scope
 
-- **Epics or projects — not lone stories.** A single Jira story has no roadmap, so Trackbed does not apply. Stories go straight to execution (Superpowers / vanilla). The only Trackbed capability a story may borrow is ADR intake/create (`trackbed-adr`).
+- **Epics or projects — not lone stories.** A single Jira story has no roadmap, so Trackbed does not apply. Stories go straight to execution (Superpowers / vanilla). The only Trackbed capability a story may borrow is ADR intake/create (`trackbed-adr`) — which also runs standalone on an epic or project when only ADRs are wanted and no roadmap is being built.
 - **Planning + orchestration only.** Trackbed never implements a phase itself; it dispatches to an executor and tracks the result. It is deliberately resilient about *how* a phase gets built.
 
 ## 3. Hard rules
@@ -37,7 +37,7 @@ Every roadmap hangs off an **anchor** (recorded in the manifest as `anchor`):
 2. **Firewall — team-facing outputs stay framework-neutral.** Jira tickets, the PRD, and ADR files must contain **no** GSD/Trackbed vocabulary and **no** `.planning/` or `.trackbed/` paths. They use plain domain language only. Internal phase↔ticket mapping never leaks into Jira.
 3. **Always ask before writing to Jira.** Never auto-create or auto-link a ticket silently. Under a `project` anchor, Jira may be unused entirely.
 4. **Skills-only.** No executable scripts, no Python dependencies, no hooks. The agent reads/writes markdown/YAML by convention. The roadmap file is the single source of truth and must be re-read (never trusted from stale memory) — this is how the "rails the car can't jump" guarantee is upheld without code.
-5. **One front door.** Only `trackbed` is user-invoked. `trackbed-init`, `trackbed-orchestrate`, and `trackbed-adr` are internal skills reached through it (and `trackbed-adr` is also reusable by a story flow).
+5. **One front door for planning.** Only `trackbed` is the planning/orchestration entry point; `trackbed-init` and `trackbed-orchestrate` are hidden (`user-invocable: false`) and reached only through it. `trackbed-adr` is the exception — it is user-invocable and also runs standalone (a story flow, or an epic/project that needs only ADRs), in addition to being delegated to by `trackbed-init`.
 
 ## 4. Storage model
 
@@ -111,7 +111,7 @@ Idempotency comes from: only act on phases whose mapping is empty/absent or `pen
 | `trackbed` | **user-facing** (the only `/command`) | Front door. Determine anchor (epic/project), route to init or orchestrate. |
 | `trackbed-init` | internal | One-time planning: PRD → ADR → roadmap → tickets + set format switch. Skippable. |
 | `trackbed-orchestrate` | internal | Living roadmap+status+notes; compute next phase; hand off; record; runtime mutation. |
-| `trackbed-adr` | internal + shared | Read existing ADRs, gap-fill new ones. Used by init and by stories. |
+| `trackbed-adr` | internal + shared + standalone | Read existing ADRs, gap-fill new ones. Used by init, by stories, or standalone on an epic/project that needs only ADRs (no roadmap). |
 
 ### 5.1 `trackbed` (front door)
 
@@ -150,12 +150,12 @@ Init ends when: roadmap exists, phases are ticketed, manifest is written (`shape
 
 ### 5.4 `trackbed-adr` (shared ADR intake/create)
 
-Honors the `adr_mode` passed by the caller: **`read`** (default) = steps 1–2 only, create nothing; **`read-create`** = steps 1–3. It is never invoked with `skip` (init simply skips calling it).
+Honors the `adr_mode` passed by the caller: **`read`** (default) = steps 1–2 only, create nothing; **`read-create`** = steps 1–3. It is never invoked with `skip` (init simply skips calling it). When run **standalone** (no caller passes a mode) it defaults to `read` and asks before creating; it needs no manifest or roadmap.
 
 1. **Resolve ADR location from config** (this repo's `docs/`, another repo, or a local untracked folder). Ask if unset; never assume.
 2. **Scan + read existing ADRs** — the primary job. Understand recorded decisions so planning respects them.
 3. **Gap-fill only** (`read-create` only). If decisions implied by the current work are already covered → nothing to create. If there's a genuine gap → propose a new ADR (**global sequential** numbering `ADR-NNNN.md`, conventional format: context / decision / consequences / status), **user approves**.
-4. Used inside `trackbed-init` (epic or project) and standalone by a story flow.
+4. Used inside `trackbed-init` (epic or project), standalone by a story flow, or standalone on an epic/project that needs only ADRs surfaced or created — with no roadmap involved.
 
 ## 6. The format switch (summary)
 

@@ -1,12 +1,12 @@
 ---
 name: trackbed-adr
-description: Internal + shared ADR intake/create for Trackbed. Resolve the ADR location, scan and read existing Architecture Decision Records so planning respects them, and gap-fill a new ADR only when there is a genuine uncovered decision. Invoked inside trackbed-init (step 2, for an epic or project) and standalone by a story flow. Reading existing ADRs is the common case; creating one is the rare exception. Trigger whenever an epic, project, or story needs its recorded architecture decisions surfaced before planning.
+description: Internal + shared ADR intake/create for Trackbed. Resolve the ADR location, scan and read existing Architecture Decision Records so planning respects them, and gap-fill a new ADR only when there is a genuine uncovered decision. Invoked inside trackbed-init (step 2, for an epic or project) and usable standalone — by a story flow, OR directly on an epic or project when you only need ADRs surfaced or created and do NOT want a roadmap. No manifest, roadmap, or caller is required to run it standalone. Reading existing ADRs is the common case; creating one is the rare exception. Trigger whenever an epic, project, or story needs its recorded architecture decisions surfaced — with or without a roadmap.
 ---
 # Trackbed — ADR Intake / Create
 
 You handle Architecture Decision Records for Trackbed. Your job is **mostly reading**: surface the decisions already recorded so the roadmap (or a story's plan) respects them. ADRs almost always pre-exist. Creating a new one is the rare exception — only for a genuine, uncovered decision, and only with user approval.
 
-You are an internal skill. You are invoked by `trackbed-init` (its step 2, after the PRD) and standalone by a story flow. You are never the user's front door — that is `trackbed`.
+You are an internal **and** standalone skill. You are invoked by `trackbed-init` (its step 2, after the PRD), and you can also run on your own — for a story flow, or directly on an epic or project when the user only wants ADRs read or created and is **not** building a roadmap. You do not require a manifest, a roadmap, or a calling skill. (You are not the planning front door — that is `trackbed`; you are the ADR specialist it and others delegate to.)
 
 ## Mode
 
@@ -15,7 +15,7 @@ Your caller passes an `adr_mode` (recorded in the manifest):
 - **`read`** (default) — read existing ADRs and report the relevant decisions. **Create nothing.** Stop after Step 2.
 - **`read-create`** — read existing ADRs, and additionally propose a new ADR for a genuine gap (Step 3), with user approval.
 
-You are never invoked with `skip` — when ADRs are skipped, `trackbed-init` simply does not call you. If no mode is passed (e.g. a standalone story flow), default to `read` and ask the user before creating anything.
+You are never invoked with `skip` — when ADRs are skipped, `trackbed-init` simply does not call you. If no mode is passed (e.g. any standalone run — a story, or an epic/project with no roadmap), default to `read` and ask the user before creating anything.
 
 ## Hard rules
 
