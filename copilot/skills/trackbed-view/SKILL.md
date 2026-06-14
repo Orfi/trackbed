@@ -46,13 +46,13 @@ Write the file, overwriting any previous copy. This keeps the picture exactly ma
 
 ## Step 3 — Open it
 
-Open `.trackbed/<key>/roadmap.html` in the default browser via a single Bash call, trying in order:
+Open `.trackbed/<key>/roadmap.html` in a real browser. **Detect the OS first** and run the matching command — do not assume bash or a particular shell; use whatever shell the runtime gives you on this platform.
 
-- macOS → `open <path>`
-- Linux → `xdg-open <path>`
-- Windows → `start "" <path>`
+- **macOS** → `open "<abs-path>"` (uses the default browser; reliable).
+- **Windows** → from PowerShell: `Start-Process "<abs-path>"`; from cmd: `start "" "<abs-path>"`; from Git Bash/WSL: `cmd.exe /c start "" "<win-path>"` (convert `/mnt/c/...` or POSIX paths to a Windows path / `file:///C:/...` URL first). Any of these opens the user's default browser.
+- **Linux** → **prefer a real browser binary** over `xdg-open`. Try, in order, the first that exists: `google-chrome`, `chromium`, `firefox`, `brave-browser`, then **fall back** to `xdg-open "<abs-path>"`. `xdg-open` honours the desktop's `text/html` association, which is sometimes mis-set to a non-browser app (e.g. a chat client) — preferring an explicit browser avoids that. Launch detached (e.g. background it) so it doesn't block.
 
-Always also print the absolute path, so the user can open it manually when there's no GUI (headless box, SSH session). If generation in Step 2 failed for any reason, say so and still report the path.
+Use an **absolute path** (or a `file://` URL). **Always also print the absolute path** in your reply, so the user can open it manually when there's no GUI (headless box, SSH/remote session) or when the launch silently opens the wrong app. If generation in Step 2 failed for any reason, say so and still report the path.
 
 ## Relationship to other skills
 
