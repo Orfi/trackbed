@@ -1,6 +1,7 @@
 ---
 name: trackbed-init
 description: Internal one-time planning pipeline for Trackbed. Turns a Jira epic — or a standalone project — into an optional PRD, optional ADRs, an ordered roadmap, and (optionally) tickets, then locks the storage format in the manifest. Invoked by trackbed when no roadmap exists. Skippable when a roadmap already exists. Never user-invoked directly; never drives execution.
+user-invocable: false
 ---
 # Trackbed Init
 
