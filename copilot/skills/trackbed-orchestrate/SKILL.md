@@ -1,7 +1,6 @@
 ---
 name: trackbed-orchestrate
 description: Internal Trackbed skill (invoked by trackbed, not by the user). Drive the ongoing orchestration loop for a Jira epic or a standalone project: read the manifest, compute the next unblocked phase, show the rail view, hand each phase to an executor (Copilot CLI itself, or a Copilot custom agent), record progress and per-phase notes, and absorb runtime roadmap changes. Use whenever a roadmap already exists and work needs to advance, resume, or be re-checked. The roadmap is the single source of truth — always re-read it.
-user-invocable: false
 ---
 # Trackbed Orchestrate
 
