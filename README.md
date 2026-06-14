@@ -92,11 +92,21 @@ cd trackbed
 ./install.sh
 ```
 
+The installer asks which runtime(s) to install for. Pick one or more — type a single number, or several separated by a space or comma:
+
+```
+Install for which runtime(s)?
+  1) Claude Code
+  2) OpenCode
+Select one or more (e.g. '1', '2', or '1 2' / '1,2' for both).
+Choice: 1 2
+```
+
 | Flag | Effect |
 |---|---|
 | *(none)* | Copy the skills + command into place |
 | `--link` | Symlink instead of copy — repo edits go live (dev) |
-| `--uninstall` | Remove an existing Trackbed install |
+| `--uninstall` | Remove an existing Trackbed install (prompts for runtime the same way) |
 | `--help` | Show usage |
 
 Then invoke `/trackbed <jira-epic-key | project-slug>` in either runtime.
