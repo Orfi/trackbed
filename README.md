@@ -84,7 +84,7 @@ Phases are walked in **dotted-segment id order** (like version numbers): `3 → 
 
 ## Installation
 
-Run the installer and pick your runtime — Claude Code, OpenCode, or both:
+Run the installer and pick your runtime(s) — Claude Code, OpenCode, GitHub Copilot CLI, or any combination:
 
 ```bash
 git clone https://github.com/Orfi/trackbed.git
@@ -110,7 +110,7 @@ Choice: 1 2 3
 | `--uninstall` | Remove an existing Trackbed install (prompts for runtime the same way) |
 | `--help` | Show usage |
 
-Then invoke `/trackbed <jira-epic-key | project-slug>` in either runtime.
+Then invoke `/trackbed <jira-epic-key | project-slug>` in any installed runtime.
 
 ### Layout
 
