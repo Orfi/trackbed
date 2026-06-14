@@ -166,8 +166,11 @@ Honors the `adr_mode` passed by the caller: **`read`** (default) = steps 1–2 o
 
 ## 7. Platform notes
 
-- Skills are markdown (`SKILL.md` + YAML frontmatter), compatible with both Claude Code (`~/.claude/skills/`) and OpenCode (reads `~/.claude/skills/` natively; commands need copying to `~/.config/opencode/commands/`).
-- In this repo the Trackbed files live under `trackbed/claude/skills/` and `trackbed/claude/commands/`, with this spec at `trackbed/trackbed-spec.md`. Installation into `~/.claude` (and any OpenCode/Copilot mirror) is handled separately (out of scope for the authoring pass).
+- Skills are markdown (`SKILL.md` + YAML frontmatter), compatible across three runtimes:
+  - **Claude Code** — skills at `~/.claude/skills/`, command at `~/.claude/commands/trackbed.md`.
+  - **OpenCode** — reads `~/.claude/skills/` natively (or its own `~/.config/opencode/skills/`); command copied to `~/.config/opencode/commands/trackbed.md`.
+  - **GitHub Copilot CLI** — skills at `~/.copilot/skills/`; no command file (a skill is its own slash command). Uses its own skill copy because the executor reference differs.
+- In this repo each runtime has its own surface: `claude/` (skills + command), `opencode/` (command only — skills shared with `claude/`), and `copilot/` (its own adapted skill copy). The spec lives at `trackbed/trackbed-spec.md`. Installation into the runtimes is handled by `install.sh` (interactive runtime selection), which is install-time plumbing only and does not violate the skills-only rule.
 
 ## 8. Out of scope (parked)
 
