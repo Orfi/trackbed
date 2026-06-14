@@ -21,8 +21,8 @@ Trackbed has two stages:
 
 Every roadmap hangs off an **anchor** (recorded in the manifest as `anchor`):
 
-- **`epic`** — keyed by a Jira epic key (e.g. `PANV-60446`). Phases map to Jira stories; ticketing is part of the flow.
-- **`project`** — keyed by a slug (e.g. `sonofanton`) for a small app with no epic. Phases are local stories/tasks; **Jira is optional** (phases may stay 100% local, or be linked/created on request). No fake/dummy epic is ever created.
+- **`epic`** — keyed by a Jira epic key (e.g. `DEMO-100`). Phases map to Jira stories; ticketing is part of the flow.
+- **`project`** — keyed by a slug (e.g. `acme-app`) for a small app with no epic. Phases are local stories/tasks; **Jira is optional** (phases may stay 100% local, or be linked/created on request). No fake/dummy epic is ever created.
 
 `<key>` (the epic key or project slug) names the working directory `.trackbed/<key>/` in both anchors.
 
@@ -47,11 +47,11 @@ Per-roadmap pointer file: **`.trackbed/<key>/manifest.yml`**. Exists in **both**
 
 ```yaml
 anchor: epic | project    # which kind of roadmap this is
-key: PANV-60446           # Jira epic key (epic anchor) or project slug (project anchor)
+key: DEMO-100           # Jira epic key (epic anchor) or project slug (project anchor)
 format: gsd | native      # the locked format switch
 shape: populated | greenfield   # whether the epic already had stories at init (project → always greenfield)
 adr_mode: read | read-create | skip   # how ADRs are handled (default: read)
-prd_path: docs/PRD-PANV-60446.md        # where the PRD lives (read or created; may be absent under project anchor)
+prd_path: docs/PRD-DEMO-100.md        # where the PRD lives (read or created; may be absent under project anchor)
 adr_path: docs/adr/                      # ADR location (may be external/untracked; absent if adr_mode=skip)
 roadmap_path: .planning/ROADMAP.md       # gsd mode → GSD file; native → .trackbed/<key>/roadmap.yml
 created: 2026-06-13
@@ -75,13 +75,13 @@ Each phase carries three layers:
 
 ```yaml
 anchor: epic                    # or: project
-key: PANV-60446                 # epic key, or project slug
+key: DEMO-100                 # epic key, or project slug
 phases:
   - id: "11.2"                    # decimal insertions allowed at runtime (e.g. 11.2 between 11.1 and 11.3)
-    scope: "BFF API-key validation — remove Identity HTTP fallback"
+    scope: "API-key validation — remove legacy auth fallback"
     depends: ["11.1"]
     done: "code + gates"          # explicit done-criteria
-    jira: PANV-61955              # link state — see below
+    jira: DEMO-102              # link state — see below
     status: done | current | blocked | todo   # persisted only — "next" is computed each turn, never stored
     inserted: false               # true for a runtime decimal insertion (mirrors GSD's "(INSERTED)")
     owes: []                      # gates not yet run, if any
@@ -92,7 +92,7 @@ phases:
 **Phase order.** Phases are stored and walked in **dotted-segment id order** (compare segment by segment as integers, like version numbers, not by numeric value): `3 → 3.1 → 3.2 → 3.2.1 → 3.3 → 4`, arbitrary depth. `depends` gates *eligibility*; id order sets the *walk*. The "next" phase is computed each turn as the first unblocked phase in this order — it is never a stored status. (GSD mode inherits GSD's own numeric ordering.)
 
 **Jira link state (three values, drives create/link-ask):**
-- `jira: PANV-61955` → linked (exists on board)
+- `jira: DEMO-102` → linked (exists on board)
 - `jira:` absent/null → **not yet ticketed** → trigger "create or link?" ask (epic anchor, or project-with-Jira). Under a `project` anchor with Jira opted out, empty is the normal resting state — no prompt.
 - `jira: pending` → decided to create, not yet written
 
@@ -175,5 +175,5 @@ Honors the `adr_mode` passed by the caller: **`read`** (default) = steps 1–2 o
 ## 8. Out of scope (parked)
 
 - QML visualization (DAG / Gantt lenses) — see the idea brief, "later, if it earns it."
-- SonOfAnton integration — Trackbed ships standalone first; the app can read the same files later.
+- Acme App integration — Trackbed ships standalone first; the app can read the same files later.
 - Pulling actuals from Jira (sprint dates) for a real Gantt.

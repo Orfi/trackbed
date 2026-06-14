@@ -1,6 +1,6 @@
 ---
 name: trackbed
-description: The user-facing front door for Trackbed — plan and orchestrate a roadmap of phases for either a Jira EPIC or a standalone PROJECT (a small app with no epic). Use whenever the user wants to plan, roadmap, orchestrate, or work through an epic or a project with Trackbed — phrases like "trackbed PANV-60446", "trackbed this app", "plan this epic", "start a roadmap for sonofanton", or any request to roadmap/orchestrate a body of work. This is the only Trackbed skill invoked directly; it determines the anchor (epic vs project) and dispatches to trackbed-init and trackbed-orchestrate. A single Jira story has no roadmap — Trackbed does not apply to it.
+description: The user-facing front door for Trackbed — plan and orchestrate a roadmap of phases for either a Jira EPIC or a standalone PROJECT (a small app with no epic). Use whenever the user wants to plan, roadmap, orchestrate, or work through an epic or a project with Trackbed — phrases like "trackbed DEMO-100", "trackbed this app", "plan this epic", "start a roadmap for acme-app", or any request to roadmap/orchestrate a body of work. This is the only Trackbed skill invoked directly; it determines the anchor (epic vs project) and dispatches to trackbed-init and trackbed-orchestrate. A single Jira story has no roadmap — Trackbed does not apply to it.
 ---
 # Trackbed — Front Door
 
@@ -10,14 +10,14 @@ You are the single user-facing entry point for Trackbed. Your job is to determin
 
 The user wants to plan, roadmap, or work through a body of work with Trackbed. Two entry shapes:
 - **Epic** — the user names (or hands you) a Jira epic key.
-- **Project** — the user has no epic (a small app like SonOfAnton); they just want a roadmap of phases anchored to the project itself.
+- **Project** — the user has no epic (a small app like Acme App); they just want a roadmap of phases anchored to the project itself.
 
 ## Anchors
 
 Every Trackbed roadmap hangs off an **anchor**, recorded in the manifest as `anchor`:
 
-- **`epic`** — keyed by the Jira epic key (e.g. `PANV-60446`). Phases map to Jira stories; ticketing is part of the flow.
-- **`project`** — keyed by a **slug** the user picks (e.g. `sonofanton`). Phases are local stories/tasks. **Jira is optional** — phases may stay 100% local, or be linked/created in Jira if the user wants.
+- **`epic`** — keyed by the Jira epic key (e.g. `DEMO-100`). Phases map to Jira stories; ticketing is part of the flow.
+- **`project`** — keyed by a **slug** the user picks (e.g. `acme-app`). Phases are local stories/tasks. **Jira is optional** — phases may stay 100% local, or be linked/created in Jira if the user wants.
 
 The anchor key is what names the working directory: `.trackbed/<key>/` (where `<key>` is the epic key or the project slug).
 
@@ -32,10 +32,10 @@ The anchor key is what names the working directory: `.trackbed/<key>/` (where `<
 
 Work out which anchor applies from what the user gave you:
 
-- **They gave a Jira key** (e.g. `PANV-60446`) → go to **Step 1a** (epic anchor).
+- **They gave a Jira key** (e.g. `DEMO-100`) → go to **Step 1a** (epic anchor).
 - **They clearly described a standalone project / small app with no epic** → go to **Step 1b** (project anchor).
 - **They gave nothing usable, or it's ambiguous** → **ask first**, then route:
-  > Is this a **Jira epic** or a **standalone project**? If it's an epic, give me the epic key (e.g. `PANV-60446`); if it's a project, give me a short slug (e.g. `sonofanton`).
+  > Is this a **Jira epic** or a **standalone project**? If it's an epic, give me the epic key (e.g. `DEMO-100`); if it's a project, give me a short slug (e.g. `acme-app`).
 
   Wait for the answer. A key → Step 1a; a slug / "project" → Step 1b.
 
@@ -54,7 +54,7 @@ Work out which anchor applies from what the user gave you:
 
 ### Step 1b — Project anchor
 
-1. There is no epic. Ask the user for a short **slug** to name this project's roadmap (e.g. `sonofanton`). This slug is the anchor key — it names `.trackbed/<slug>/`. Keep it lowercase, hyphenated, stable (it does not change later).
+1. There is no epic. Ask the user for a short **slug** to name this project's roadmap (e.g. `acme-app`). This slug is the anchor key — it names `.trackbed/<slug>/`. Keep it lowercase, hyphenated, stable (it does not change later).
 2. Proceed to Step 2 with `anchor: project`, key = the slug.
 
 ## Step 2 — Check for an existing roadmap / manifest
