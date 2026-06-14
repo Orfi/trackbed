@@ -4,9 +4,9 @@
 
 **Keep the rails, lose the train.**
 
-Trackbed is a thin **roadmap + status + orchestration** layer for working through a body of work — a Jira **epic** or a standalone **project**. It is implemented entirely as Claude Code / OpenCode **skills and one slash command**: no scripts, no Python, no hooks.
+Trackbed is a thin **roadmap + status + orchestration** layer for working through a body of work — a Jira **epic** or a standalone **project**. It is implemented entirely as **skills** (plus a thin slash command on the runtimes that need one) for Claude Code, OpenCode, and GitHub Copilot CLI: no scripts, no Python, no hooks.
 
-It keeps the one genuinely valuable thing from heavier planning frameworks — the **route and manifest** (ordered phases, dependencies, "what's owed", per-phase memory) — and lets a lightweight executor (Superpowers or vanilla Claude Code) drive each phase. Trackbed owns *where you are and what's next*; it never implements a phase itself.
+It keeps the one genuinely valuable thing from heavier planning frameworks — the **route and manifest** (ordered phases, dependencies, "what's owed", per-phase memory) — and lets a lightweight executor (Superpowers, vanilla Claude Code, OpenCode, or a Copilot agent) drive each phase. Trackbed owns *where you are and what's next*; it never implements a phase itself.
 
 ---
 
@@ -32,14 +32,14 @@ The anchor key names the working directory `.trackbed/<key>/`.
 
 ## Components
 
-One front door, three internal skills:
+One planning front door, two hidden internal skills, and a shared ADR specialist:
 
-| Skill | Tier | Role |
+| Skill | Invocability | Role |
 |---|---|---|
-| `trackbed` | **user-facing** (the only `/command`) | Front door. Determine the anchor (epic/project), route to init or orchestrate. Pure dispatcher. |
-| `trackbed-init` | internal | One-time planning: PRD → ADR → roadmap → tickets, and lock the storage format. Skippable. |
-| `trackbed-orchestrate` | internal | Living roadmap + status + notes; compute next phase; hand off; record; absorb runtime mutations. |
-| `trackbed-adr` | internal + shared | Read existing ADRs, gap-fill new ones. Used by init and reusable by a story flow. |
+| `trackbed` | **user-invocable** | Front door. Determine the anchor (epic/project), route to init or orchestrate. Pure dispatcher. |
+| `trackbed-init` | hidden (`user-invocable: false`) | One-time planning: PRD → ADR → roadmap → tickets, and lock the storage format. Skippable. |
+| `trackbed-orchestrate` | hidden (`user-invocable: false`) | Living roadmap + status + notes; compute next phase; hand off; record; absorb runtime mutations. |
+| `trackbed-adr` | **user-invocable** (shared) | Read existing ADRs, gap-fill new ones. Used by init, or run standalone on a story/epic/project that needs only ADRs — no roadmap required. |
 
 ## Usage
 
@@ -52,7 +52,7 @@ One front door, three internal skills:
 
 The front door reads the anchor, checks for an existing roadmap under `.trackbed/<key>/`, then routes to **init** (if nothing exists) or straight to **orchestration** (if a roadmap is already there).
 
-> A single Jira **story** has no roadmap — Trackbed does not apply to it. Stories go straight to execution; they may borrow `trackbed-adr` standalone for decision intake.
+> A single Jira **story** has no roadmap — Trackbed does not apply to it. Stories go straight to execution; they may borrow `trackbed-adr` standalone for decision intake. `trackbed-adr` also runs standalone on an epic or project when you only want ADRs surfaced or created and aren't building a roadmap.
 
 ## The format switch
 
@@ -74,7 +74,7 @@ Phases are walked in **dotted-segment id order** (like version numbers): `3 → 
 2. **Firewall.** Team-facing outputs (Jira tickets, PRD, ADRs) stay framework-neutral — plain domain language, no GSD/Trackbed vocabulary, no `.planning/` or `.trackbed/` paths. The phase↔ticket mapping never leaks into Jira.
 3. **Always ask before writing to Jira.** Never auto-create or auto-link a ticket. Under a `project` anchor, Jira may be unused entirely.
 4. **Skills-only.** No scripts, no Python, no hooks. The roadmap file is the single source of truth and is always re-read, never trusted from stale memory.
-5. **One front door.** Only `trackbed` is user-invoked; the rest are reached through it.
+5. **One front door for planning.** `trackbed` is the planning entry point; `trackbed-init` and `trackbed-orchestrate` are hidden (`user-invocable: false`) and reached only through it. `trackbed-adr` is the exception — user-invocable and runnable standalone.
 
 ## Lifecycle
 
