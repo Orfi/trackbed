@@ -84,19 +84,51 @@ Phases are walked in **dotted-segment id order** (like version numbers): `3 → 
 
 ## Installation
 
-The Trackbed skills and command live under `claude/`:
+Run the installer and pick your runtime — Claude Code, OpenCode, or both:
+
+```bash
+git clone https://github.com/Orfi/trackbed.git
+cd trackbed
+./install.sh
+```
+
+| Flag | Effect |
+|---|---|
+| *(none)* | Copy the skills + command into place |
+| `--link` | Symlink instead of copy — repo edits go live (dev) |
+| `--uninstall` | Remove an existing Trackbed install |
+| `--help` | Show usage |
+
+Then invoke `/trackbed <jira-epic-key | project-slug>` in either runtime.
+
+### Layout
+
+The skills are markdown (`SKILL.md` + YAML frontmatter). The repo separates each runtime's surface so a future Copilot version can sit alongside:
 
 ```
-claude/
+claude/                       # Claude Code surface
 ├── commands/trackbed.md
 └── skills/
     ├── trackbed/SKILL.md
     ├── trackbed-init/SKILL.md
     ├── trackbed-orchestrate/SKILL.md
     └── trackbed-adr/SKILL.md
+opencode/                     # OpenCode surface (command only — skills are shared)
+└── commands/trackbed.md
+install.sh
 ```
 
-Skills are markdown (`SKILL.md` + YAML frontmatter), compatible with both Claude Code (`~/.claude/skills/`) and OpenCode (which reads `~/.claude/skills/` natively; commands need copying to `~/.config/opencode/commands/`). Installing into `~/.claude` (and any OpenCode/Copilot mirror) is handled separately.
+### Where things land
+
+The skills are shared across runtimes; only the command file differs in format. To avoid the two skill homes drifting (OpenCode reads **both** `~/.claude/skills/` and `~/.config/opencode/skills/`), the installer puts skills in exactly **one** home per machine:
+
+| You install for | Skills | Command |
+|---|---|---|
+| Claude Code only | `~/.claude/skills/` | `~/.claude/commands/trackbed.md` |
+| OpenCode only | `~/.config/opencode/skills/` | `~/.config/opencode/commands/trackbed.md` |
+| Both | `~/.claude/skills/` *(OpenCode reads it natively)* | both command files |
+
+On an OpenCode-only machine, Claude Code need not be installed — `~/.claude/skills/` is just a path OpenCode also reads; the installer uses the OpenCode-native path instead.
 
 ## Status
 
