@@ -171,14 +171,8 @@ On an OpenCode-only machine, Claude Code need not be installed — `~/.claude/sk
 
 ## Versioning
 
-Trackbed follows [Semantic Versioning](https://semver.org). Releases are git tags (`v0.1.0`, …) with notes in [`CHANGELOG.md`](CHANGELOG.md). To update an install, `git pull` and re-run `./install.sh`.
+Trackbed follows [Semantic Versioning](https://semver.org). Releases are git tags (`v0.1.0`, …) with notes in [`CHANGELOG.md`](CHANGELOG.md). To update an install, `git pull` and re-run the installer (`./install.sh`, or `pwsh ./install.ps1` on Windows).
 
 ## Status
 
 Spec and skills authored. See [`trackbed-spec.md`](trackbed-spec.md) for the full specification and [`Trackbed-idea.html`](Trackbed-idea.html) for the original "rails without the train" concept brief.
-
-### Out of scope (parked)
-
-- QML visualization (DAG / Gantt lenses).
-- Acme App integration — Trackbed ships standalone first; the app can read the same files later.
-- Pulling actuals from Jira (sprint dates) for a real Gantt.
