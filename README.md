@@ -98,8 +98,9 @@ The installer asks which runtime(s) to install for. Pick one or more — type a 
 Install for which runtime(s)?
   1) Claude Code
   2) OpenCode
-Select one or more (e.g. '1', '2', or '1 2' / '1,2' for both).
-Choice: 1 2
+  3) GitHub Copilot CLI
+Select one or more (e.g. '1', '3', or '1 2 3' / '1,2' for several).
+Choice: 1 2 3
 ```
 
 | Flag | Effect |
@@ -113,7 +114,7 @@ Then invoke `/trackbed <jira-epic-key | project-slug>` in either runtime.
 
 ### Layout
 
-The skills are markdown (`SKILL.md` + YAML frontmatter). The repo separates each runtime's surface so a future Copilot version can sit alongside:
+The skills are markdown (`SKILL.md` + YAML frontmatter). The repo keeps a separate surface per runtime:
 
 ```
 claude/                       # Claude Code surface
@@ -123,10 +124,18 @@ claude/                       # Claude Code surface
     ├── trackbed-init/SKILL.md
     ├── trackbed-orchestrate/SKILL.md
     └── trackbed-adr/SKILL.md
-opencode/                     # OpenCode surface (command only — skills are shared)
+opencode/                     # OpenCode surface (command only — skills shared with claude/)
 └── commands/trackbed.md
+copilot/                      # GitHub Copilot CLI surface (own skill copy, executor text adapted)
+└── skills/
+    ├── trackbed/SKILL.md
+    ├── trackbed-init/SKILL.md
+    ├── trackbed-orchestrate/SKILL.md
+    └── trackbed-adr/SKILL.md
 install.sh
 ```
+
+Claude Code and OpenCode share one skill source (`claude/skills/`) — only the command file format differs. Copilot CLI keeps its **own** copy (`copilot/skills/`) because its executor differs and, in Copilot, a skill *is* its slash command — so there is no command file.
 
 ### Where things land
 
@@ -136,9 +145,10 @@ The skills are shared across runtimes; only the command file differs in format. 
 |---|---|---|
 | Claude Code only | `~/.claude/skills/` | `~/.claude/commands/trackbed.md` |
 | OpenCode only | `~/.config/opencode/skills/` | `~/.config/opencode/commands/trackbed.md` |
-| Both | `~/.claude/skills/` *(OpenCode reads it natively)* | both command files |
+| Claude Code + OpenCode | `~/.claude/skills/` *(OpenCode reads it natively)* | both command files |
+| GitHub Copilot CLI | `~/.copilot/skills/` | *(none — the skill is the command)* |
 
-On an OpenCode-only machine, Claude Code need not be installed — `~/.claude/skills/` is just a path OpenCode also reads; the installer uses the OpenCode-native path instead.
+On an OpenCode-only machine, Claude Code need not be installed — `~/.claude/skills/` is just a path OpenCode also reads; the installer uses the OpenCode-native path instead. Copilot is independent of both: it has its own home (`~/.copilot/skills/`) and never shares or collides with the Claude/OpenCode skill paths.
 
 ## Status
 
