@@ -61,11 +61,13 @@ created: 2026-06-13
 
 ### 4.2 Roadmap content location (depends on format)
 
-- **GSD mode:** roadmap / status / notes live in GSD's `.planning/` files. Trackbed reads, updates, modifies, and backfills them.
+- **GSD mode:** roadmap / status / notes live in GSD's `.planning/` files — `ROADMAP.md` plus **`STATE.md`** (GSD's own cross-phase digest, owned by GSD's tooling). Trackbed reads, updates, and backfills them but **never alters GSD's `ROADMAP.md` format**. The one thing `.planning/` has no slot for — the phase↔ticket mapping — lives in a separate Trackbed-owned file `.trackbed/<key>/phase-jira.md` (a `phase-id → JIRA-KEY` table), kept in sync with `ROADMAP.md`.
 - **Native mode:** roadmap / status / notes live alongside the manifest in `.trackbed/<key>/`:
-  - `roadmap.yml` — ordered phases (see §4.3)
-  - `state.yml` — current pointer, turn, what's owed
+  - `roadmap.yml` — ordered phases (see §4.3); the phase's `jira:` field *is* the phase↔ticket mapping (no separate file)
+  - `state.yml` — cross-phase digest mirroring STATE.md's fields: `current` (phase + status), `blockers`, `session` (stopped-at / resume-hint). Re-read first every turn.
   - `notes/` — per-phase memory (or inlined per phase in `roadmap.yml`)
+
+The state file (`STATE.md` in gsd mode, `state.yml` in native mode) is created by `trackbed-init` right after the roadmap, and updated by `trackbed-orchestrate` after every phase.
 
 ### 4.3 Native roadmap phase shape
 
@@ -80,22 +82,25 @@ phases:
     depends: ["11.1"]
     done: "code + gates"          # explicit done-criteria
     jira: PANV-61955              # link state — see below
-    status: done | current | next | blocked | todo
+    status: done | current | blocked | todo   # persisted only — "next" is computed each turn, never stored
+    inserted: false               # true for a runtime decimal insertion (mirrors GSD's "(INSERTED)")
     owes: []                      # gates not yet run, if any
     notes: |                      # per-phase memory (what worked, what didn't, postponed, moved, impl notes)
       ...
 ```
+
+**Phase order.** Phases are stored and walked in **dotted-segment id order** (compare segment by segment as integers, like version numbers, not by numeric value): `3 → 3.1 → 3.2 → 3.2.1 → 3.3 → 4`, arbitrary depth. `depends` gates *eligibility*; id order sets the *walk*. The "next" phase is computed each turn as the first unblocked phase in this order — it is never a stored status. (GSD mode inherits GSD's own numeric ordering.)
 
 **Jira link state (three values, drives create/link-ask):**
 - `jira: PANV-61955` → linked (exists on board)
 - `jira:` absent/null → **not yet ticketed** → trigger "create or link?" ask (epic anchor, or project-with-Jira). Under a `project` anchor with Jira opted out, empty is the normal resting state — no prompt.
 - `jira: pending` → decided to create, not yet written
 
-Idempotency comes from: only act on phases whose `jira:` is empty/absent or `pending`; never re-touch a real key. The roadmap **is** the phase↔ticket mapping (no separate `.md` mapping file in native mode).
+Idempotency comes from: only act on phases whose mapping is empty/absent or `pending`; never re-touch a real key. **Native mode:** the roadmap *is* the mapping (the phase's `jira:` field) — no separate file. **GSD mode:** since GSD's `ROADMAP.md` is never modified to hold keys, the mapping lives in the separate Trackbed-owned `.trackbed/<key>/phase-jira.md`, kept in sync with `ROADMAP.md` on every insert/delete/ticket.
 
 ### 4.4 Lifecycle — `.trackbed/` is scaffolding, not deliverable
 
-`.trackbed/` may be tracked during development but is **noise to a code reviewer**. It must be **removed when the final PR is cut** to merge the work (gitignore, or strip at PR time — same treatment as GSD's `.planning/` via `gsd-pr-branch`).
+`.trackbed/` is **noise to a code reviewer**, but it **stays git-tracked through development** — it is *not* gitignored (an untracked dir is liable to be deleted as noise by a panicking agent). It is **removed manually at the very end**, just before the final PR — a deliberate one-off delete (or a simple prompt), not an automated Trackbed step. Same intent as stripping GSD's `.planning/`, but done by hand.
 
 **Durable / team-facing** (survive the PR): the code, the PRD, the ADRs (in their configured location), and the Jira tickets. **Ephemeral / private** (stripped): `.trackbed/` and `.planning/`.
 
