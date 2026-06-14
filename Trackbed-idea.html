@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trackbed — rails without the train</title>
+<style>
+  :root{
+    --bg:#0b0f0a; --panel:#11160f; --panel2:#0e130d; --ink:#d6e8c8; --ink-dim:#8fa882;
+    --green:#39ff5a; --green-dim:#2bbf45; --amber:#ffb84d; --red:#ff6b6b; --blue:#7fd1ff;
+    --line:#1f2a18; --accent:#39ff5a;
+    --mono:"Cascadia Code",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --sans:"Segoe UI",Inter,system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.6;
+    background-image:radial-gradient(1200px 600px at 80% -10%, rgba(57,255,90,.06), transparent),
+                     radial-gradient(900px 500px at -10% 110%, rgba(127,209,255,.05), transparent);}
+  .wrap{max-width:1080px;margin:0 auto;padding:48px 28px 96px}
+  header.hero{border:1px solid var(--line);border-radius:16px;padding:36px 34px;background:
+    linear-gradient(180deg, rgba(57,255,90,.05), transparent 60%), var(--panel);position:relative;overflow:hidden}
+  header.hero::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0 3px,rgba(0,0,0,.18) 3px 4px);pointer-events:none;opacity:.35}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--green-dim)}
+  h1{font-family:var(--mono);font-size:40px;margin:.25em 0 .1em;color:#eafff0;text-shadow:0 0 18px rgba(57,255,90,.25)}
+  h1 .blink{color:var(--green);animation:blink 1.1s steps(2) infinite}
+  @keyframes blink{50%{opacity:0}}
+  .tagline{font-size:18px;color:var(--ink-dim);max-width:62ch}
+  .meta{font-family:var(--mono);font-size:12.5px;color:var(--ink-dim);margin-top:18px;display:flex;gap:18px;flex-wrap:wrap}
+  .meta b{color:var(--green-dim);font-weight:600}
+
+  h2{font-family:var(--mono);font-size:22px;color:#eafff0;margin:54px 0 6px;display:flex;align-items:center;gap:12px}
+  h2 .n{color:var(--green);font-size:15px;border:1px solid var(--green-dim);border-radius:6px;padding:2px 8px}
+  h3{font-family:var(--mono);font-size:16px;color:var(--blue);margin:28px 0 4px}
+  p{margin:10px 0}
+  .lead{font-size:17px;color:var(--ink)}
+  a{color:var(--green)}
+  .sub{color:var(--ink-dim);font-size:14.5px}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px 22px;margin:16px 0}
+  .card.glow{border-color:var(--green-dim);box-shadow:0 0 0 1px rgba(57,255,90,.12),0 8px 30px rgba(57,255,90,.06)}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+  @media(max-width:760px){.grid,.grid3{grid-template-columns:1fr}}
+  ul{margin:8px 0;padding-left:20px}
+  li{margin:6px 0}
+  code{font-family:var(--mono);background:#0a0d08;border:1px solid var(--line);border-radius:4px;padding:1px 6px;font-size:13px;color:var(--blue)}
+  pre{font-family:var(--mono);background:#080b07;border:1px solid var(--line);border-radius:10px;padding:16px 18px;overflow:auto;font-size:13px;color:var(--ink);line-height:1.5}
+  pre .c{color:var(--ink-dim)} pre .g{color:var(--green)} pre .b{color:var(--blue)} pre .a{color:var(--amber)}
+
+  .callout{border-left:3px solid var(--amber);background:rgba(255,184,77,.06);padding:14px 18px;border-radius:0 8px 8px 0;margin:16px 0}
+  .callout.green{border-color:var(--green);background:rgba(57,255,90,.06)}
+  .callout.red{border-color:var(--red);background:rgba(255,107,107,.06)}
+  .callout .k{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);display:block;margin-bottom:4px}
+  .callout.green .k{color:var(--green)} .callout.red .k{color:var(--red)}
+
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--green-dim)}
+  td code{font-size:12px}
+
+  .tag{display:inline-block;font-family:var(--mono);font-size:11px;padding:2px 8px;border-radius:20px;border:1px solid var(--line);color:var(--ink-dim)}
+  .tag.must{border-color:var(--green-dim);color:var(--green)}
+  .tag.later{border-color:var(--ink-dim)}
+
+  /* metaphor strip */
+  .vs{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:stretch;margin:18px 0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .vs .side{padding:20px 22px;background:var(--panel)}
+  .vs .mid{display:flex;align-items:center;justify-content:center;background:var(--panel2);padding:0 14px;font-family:var(--mono);color:var(--ink-dim);font-size:13px;border-left:1px solid var(--line);border-right:1px solid var(--line)}
+  .vs h3{margin-top:0}
+  @media(max-width:760px){.vs{grid-template-columns:1fr}.vs .mid{padding:10px}}
+
+  .rail{font-family:var(--mono);font-size:13px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:14px 0;line-height:2}
+  .seg{display:inline-block;padding:2px 10px;border-radius:6px;border:1px solid var(--line);margin:2px}
+  .seg.done{border-color:var(--green-dim);color:var(--green)}
+  .seg.cur{border-color:var(--amber);color:var(--amber);box-shadow:0 0 10px rgba(255,184,77,.25)}
+  .seg.block{border-color:var(--red);color:var(--red)}
+  .seg.next{border-color:var(--blue);color:var(--blue)}
+  .seg.todo{color:var(--ink-dim)}
+
+  footer{margin-top:60px;border-top:1px solid var(--line);padding-top:18px;font-family:var(--mono);font-size:12px;color:var(--ink-dim)}
+  .pulse{width:9px;height:9px;border-radius:50%;background:var(--green);display:inline-block;box-shadow:0 0 8px var(--green);animation:p 1.6s infinite}
+  @keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
+  .link{font-family:var(--mono);font-size:12.5px;color:var(--blue)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="eyebrow">Companion concept &nbsp;·&nbsp; can stand alone or fold into SonOfAnton</div>
+    <h1>Trackbed<span class="blink">_</span></h1>
+    <p class="tagline">A deliberately thin <b>roadmap + status</b> layer that gives Superpowers the one thing it lacks — <b>a route</b> — without the weight of GSD. <em>Keep the rails. Lose the train.</em></p>
+    <div class="meta">
+      <span><b>Origin:</b> the GSD/Superpowers split lived on Panviva Core</span>
+      <span><b>Status:</b> <span class="pulse"></span> idea — pre-build</span>
+      <span><b>Relation:</b> may be SonOfAnton's orchestration backbone</span>
+    </div>
+  </header>
+
+  <h2><span class="n">01</span> The metaphor</h2>
+  <div class="vs">
+    <div class="side">
+      <h3 style="color:var(--amber)">🚆 GSD — the train / tank</h3>
+      <p class="sub">Heavy. Slow to start and stop. Lots of ceremony to get rolling. But it runs on <b>rails</b> and carries <b>structure</b> — you always know where it is on the line and what's coming. Great at <em>not losing the route</em> across 17 phases; terrible at darting around.</p>
+    </div>
+    <div class="mid">vs</div>
+    <div class="side">
+      <h3 style="color:var(--green)">🏎 Superpowers — the racing car</h3>
+      <p class="sub">Fast, responsive, you feel the road, change line instantly — TDD, brainstorming, debugging, all light and reactive. But it has <b>no idea where the track goes</b>. Drop it with no map and it'll run a brilliant lap of the <em>wrong</em> circuit.</p>
+    </div>
+  </div>
+  <div class="card glow">
+    <h3>★ The move: rails without the train</h3>
+    <p style="margin-bottom:0">Don't pick one. <b>Keep the route + manifest (roadmap + status), throw away the locomotive</b> (GSD's agents, discuss/plan/execute ceremony, command sprawl), and put the racing car on the rails for each leg. The rails say <em>which segment is next and what "done" means</em>; the car drives that segment flat-out.</p>
+  </div>
+
+  <h2><span class="n">02</span> Why this exists</h2>
+  <p class="lead">Tried GSD — too heavy (train/tank). Needed the resilience of Superpowers (racing car). But the <b>one</b> thing worth keeping from GSD is its <b>roadmap + status</b>: organizing stories within an epic, ordering, dependencies, "what's owed."</p>
+  <p>This pattern is already proven by hand on Panviva Core — the project's own rule: <em>"GSD = state and roadmap management ONLY. Superpowers = phase-level execution. These two do not overlap."</em> It ran 11+ phases that way. Trackbed just makes that half <b>thin and owned</b> instead of carried on GSD's back.</p>
+
+  <div class="callout">
+    <span class="k">Prior art check</span>
+    No polished off-the-shelf tool does exactly this (lightweight roadmap/status + Superpowers-per-phase). The two ecosystems come from opposite philosophies — GSD is all-in on planning machinery; Superpowers is deliberately unopinionated about project structure. The clean bridge between them isn't shipped. <b>So: tailor it — but it's small.</b>
+  </div>
+
+  <h2><span class="n">03</span> What's actually valuable (it's tiny)</h2>
+  <p>Strip GSD to what gets <em>used</em> and you're left with two files and three conventions:</p>
+  <div class="grid">
+    <div class="card">
+      <h3>ROADMAP — the rails</h3>
+      <p class="sub">Ordered phases. Each = a Jira key + one-line scope + <code>depends-on</code>. That's the route the car follows.</p>
+    </div>
+    <div class="card">
+      <h3>STATE — the signals</h3>
+      <p class="sub">Current phase, status, what's owed (gates not yet run). The "you are here + what's red" board.</p>
+    </div>
+  </div>
+  <p class="sub"><b>Three conventions:</b> phase numbering (incl. decimals like <code>11.2</code> for insertions) · dependency edges · an explicit <b>"done = X"</b> per phase. Everything else in GSD is the heaviness being rejected.</p>
+
+  <div class="rail">
+    epic PANV-60446 ▸
+    <span class="seg done">11.1 ✓</span>
+    <span class="seg done">11.3 ✓</span>
+    <span class="seg cur">11.2 ◉ current</span>
+    <span class="seg next">11.4 → next</span>
+    <span class="seg block">13 ⛔ owes E2E</span>
+    <span class="seg todo">12</span>
+    <span class="seg todo">…17</span>
+    <div class="sub" style="line-height:1.5;margin-top:8px">// the rails, drawn: done · current · next-unblocked · blocked-with-reason · not-yet. This is all Trackbed needs to know to hand the racing car its next segment.</div>
+  </div>
+
+  <h2><span class="n">04</span> Options — cheapest → richest</h2>
+  <div class="grid3">
+    <div class="card">
+      <h3>1 · Cherry-pick GSD</h3>
+      <p class="sub">Keep only the state/roadmap skills + <code>.planning/</code> files; never invoke plan/execute. <b>~Already doing this.</b> Cost zero — but still carries GSD's file format + quirks.</p>
+    </div>
+    <div class="card glow">
+      <h3>2 · Thin bespoke layer <span class="tag must">lean pick</span></h3>
+      <p class="sub">Drop GSD. Own a simpler two-file format (no <code>gsd_state_version</code> cruft) + a tiny helper: read "next unblocked phase" → hand to Superpowers <code>brainstorming</code>/<code>executing-plans</code>. A few hundred lines, fully yours, debuggable, no heaviness.</p>
+    </div>
+    <div class="card">
+      <h3>3 · Backbone of SonOfAnton</h3>
+      <p class="sub">Same data model the app already needs for its status strip + button-gating. "Next phase / whose turn / what's owed" <b>is</b> what a control panel reads. Build once, use in both.</p>
+    </div>
+  </div>
+
+  <h2><span class="n">05</span> The thin format (sketch)</h2>
+  <p class="sub">Illustrative only — the point is how little it is. One roadmap, one state pointer.</p>
+  <pre><span class="c"># roadmap.yml — the rails</span>
+epic: PANV-60446
+phases:
+  - id: <span class="b">11.2</span>   jira: PANV-61955   <span class="g">done: code+gates</span>   depends: [11.1]
+    scope: "BFF API-key validation — remove Identity HTTP fallback"
+  - id: <span class="b">11.4</span>   jira: PANV-62093   status: <span class="a">next</span>        depends: [11.3]
+    scope: "RedisContainerMapWriter — restore Marten writer (OCP)"
+  - id: <span class="b">13</span>     jira: PANV-61405   status: blocked     depends: [11.2]
+    owes: [e2e, shell-regression]        <span class="c"># a red signal</span>
+
+<span class="c"># state.yml — the signals (one pointer + what's owed)</span>
+current: 11.2
+turn: architect            <span class="c"># whose move (SonOfAnton reads this)</span>
+owed: { 11.2: [e2e, shell-regression] }</pre>
+  <p class="sub">A ~few-hundred-line helper answers exactly three questions: <b>what's the next unblocked phase?</b> · <b>what does this phase owe before it's done?</b> · <b>hand this phase to Superpowers and mark it in-progress.</b> That's the whole engine.</p>
+
+  <h2><span class="n">05.5</span> Visualization — QML brings the roadmap to life <span class="tag later">the fun part</span></h2>
+  <p class="lead">The roadmap is just data (§05). QML is a <b>graphics/animation engine first</b>, UI toolkit second — so instead of GSD's flat markdown, Trackbed <b>draws</b> the roadmap as interactive graphics. Same data, multiple <b>lenses</b>.</p>
+
+  <div class="callout green">
+    <span class="k">Core principle — two views, one model</span>
+    The DAG view and the Gantt view are <b>the same roadmap rendered two ways</b>. You're not adding data, you're adding lenses. And both are the <b>same component SonOfAnton's status strip uses</b> — Trackbed's roadmap view <em>is</em> the app's "where are we" board, scaled up. Build the model once; the visuals are skins on it.
+  </div>
+
+  <h3>Lens A — the DAG / rail view <span class="tag must">v0 — data you already have</span></h3>
+  <p class="sub">Phases as <b>nodes</b>, dependencies as <b>edges</b>, status as <b>color</b> (palette already maps it). Answers the day-to-day question: <em>what blocks what · what's the critical path · what's parallelizable.</em></p>
+  <ul class="sub">
+    <li><b>Click a node → open the Jira ticket</b> — <code>Qt.openUrlExternally("…/browse/PANV-61955")</code>. The roadmap becomes a launchpad, not a picture. (Just needs the key + base URL — no API.)</li>
+    <li><b>Hover → tooltip</b> with scope, what's owed, dependencies — the STATE data surfaced visually instead of buried in a file.</li>
+    <li><b>Edges are the real win:</b> markdown <em>says</em> "11.4 depends-on 11.3"; a drawn DAG <em>shows</em> it — blockers, parallel legs, critical path, at a glance. (We leaned on the phase table constantly this epic — this replaces that.)</li>
+    <li><b>Live, not a snapshot:</b> nodes pulse/animate as state changes (current = amber glow, a phase clearing its gates flips green). QML animations are essentially free.</li>
+  </ul>
+  <div class="callout">
+    <span class="k">Design call — layout</span>
+    A roadmap-with-dependencies is a <b>DAG</b>, and auto-laying-out a DAG <em>nicely</em> is non-trivial. Start with <b>manual coords</b> (<code>x/y</code> per phase in the roadmap file) — at ~17 nodes, hand-placement looks better than any auto-layout and costs a fraction of the work. Topological/layered auto-layout is a "later, if it earns it" feature, not v0.
+  </div>
+
+  <h3>Lens B — the Gantt view <span class="tag later">v1 — needs a time source</span></h3>
+  <p class="sub">Same phases on a <b>time axis</b> — positioned bars sized by duration. Answers a different question: <em>when · how long · are we on track.</em> Toggle <b>rail ⇄ Gantt</b> on the same roadmap. (QML draws this trivially — it's positioned/sized <code>Rectangle</code>s on an axis.)</p>
+  <div class="callout">
+    <span class="k">The honest catch — where does TIME come from?</span>
+    The DAG needs only <b>order + dependencies</b> (you have these). A Gantt needs a <b>time dimension you don't have yet</b> — start/end/duration per phase. Three sources, increasing cost:
+    <table style="margin:10px 0 0">
+      <tr><th>Source</th><th>What it gives</th><th>Cost</th></tr>
+      <tr><td><b>Story points → duration</b></td><td>A <em>projected</em> timeline (pts × velocity, laid out by dependency order). Clearly labelled "estimated."</td><td>Cheap — you already estimate. <b>Zero new upkeep.</b></td></tr>
+      <tr><td><b>Manual dates</b></td><td>Explicit <code>start</code>/<code>end</code> in the roadmap file.</td><td>Simple, you control it — but hand-maintained.</td></tr>
+      <tr><td><b>Pull from Jira</b></td><td>Sprint dates + created/resolved = an <em>actuals</em> Gantt.</td><td><b>Big lift</b> — Atlassian API, auth, rate limits. Later phase.</td></tr>
+    </table>
+    A Gantt with fake-confident dates is <b>worse</b> than no Gantt. Each step must be honest about its precision — "projected" vs "actual."
+  </div>
+
+  <h3>Sequencing — keep each step honest</h3>
+  <table>
+    <tr><th>Step</th><th>View</th><th>Fed by</th><th>Claim it can honestly make</th></tr>
+    <tr><td><b>v0</b></td><td>DAG / rail</td><td>Order + dependencies <span class="tag must">have it</span></td><td>"Here's the <b>structure</b> — what's next, what's blocked." + Jira deep-links.</td></tr>
+    <tr><td><b>v1</b></td><td>+ Gantt</td><td>Story points → duration</td><td>"Here's the <b>projected timeline</b>" (estimated, not actuals).</td></tr>
+    <tr><td><b>v2</b></td><td>Both, Jira-synced</td><td>Atlassian API <span class="tag later">later</span></td><td>"Here's <b>reality</b>" — live ticket status + real dates. One "connect to Jira" feature (status + dates share the auth work).</td></tr>
+  </table>
+  <p class="sub">v0 shows structure from data you have; v1 projects time from estimates you have; v2 reflects reality from Jira when it's worth the API cost. No step pretends to precision it lacks. This is the "platform we add tools onto over time" — a <b>view layer</b> that grows.</p>
+
+  <h2><span class="n">06</span> The one caution the metaphor surfaces</h2>
+  <div class="callout red">
+    <span class="k">The racing car runs the wrong track happily</span>
+    Superpowers' weakness is it'll execute a <em>great lap of the wrong circuit</em> — drift, carried stale baselines, lost route between segments (exactly what bit us when stale state crept in). So Trackbed's most important job isn't speed — it's being <b>thin but authoritative</b>: the single source of "where we are / what's next / what's done," that the car can't override. Rails the car can't jump.
+  </div>
+
+  <h2><span class="n">07</span> Relation to SonOfAnton</h2>
+  <p>Trackbed can ship <b>standalone</b> (CLI + two files, drives Superpowers in a plain terminal) <em>or</em> become <b>SonOfAnton's orchestration backbone</b> — the app's status strip and button-gating are literally Trackbed's signals rendered in QML. Build it standalone first (option 2), and if the app happens, it reads the same files. Nothing wasted either way.</p>
+  <p class="link">↳ companion file: SonOfAnton-idea.html (the two-pane Architect/Executor console)</p>
+
+  <footer>
+    <p>Trackbed — concept brief · the "rails without the train" layer · captured 2026-06-08.<br>
+    "Keep the route and the manifest. Lose the locomotive. Put the racing car on the rails for each leg."</p>
+  </footer>
+
+</div>
+</body>
+</html>
