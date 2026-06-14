@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  :root{
+    --bg:#0b0f0a; --panel2:#0e130d; --ink:#d6e8c8; --ink-dim:#8fa882;
+    --green:#39ff5a; --green-dim:#2bbf45; --amber:#ffb84d; --blue:#7fd1ff; --red:#ff6b6b;
+    --line:#1f2a18;
+    --mono:"Cascadia Code",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0}
+  html,body{background:var(--bg)}
+  .banner{width:1200px;height:340px;position:relative;overflow:hidden;background:var(--bg);
+    background-image:radial-gradient(900px 500px at 82% -20%, rgba(57,255,90,.10), transparent),
+                     radial-gradient(700px 420px at -8% 120%, rgba(127,209,255,.06), transparent);
+    font-family:var(--mono);display:flex;flex-direction:column;justify-content:flex-start;padding:62px 64px 0}
+  /* scanline texture */
+  .banner::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0 3px,rgba(0,0,0,.16) 3px 4px);pointer-events:none;opacity:.35}
+
+  /* the rails: two glowing lines with ties, running the full width near the bottom */
+  .rails{position:absolute;left:0;right:0;bottom:30px;height:74px}
+  .tie{position:absolute;top:6px;width:10px;height:62px;background:linear-gradient(180deg,#16210f,#0d140a);border:1px solid var(--line);border-radius:2px}
+  .line{position:absolute;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--green-dim) 12%,var(--green) 50%,var(--green-dim) 88%,transparent);box-shadow:0 0 10px rgba(57,255,90,.5)}
+  .line.top{top:14px} .line.bot{top:54px}
+
+  .eyebrow{font-size:14px;letter-spacing:.34em;text-transform:uppercase;color:var(--green-dim);margin-bottom:10px;position:relative}
+  h1{font-size:74px;line-height:1;color:#eafff0;text-shadow:0 0 26px rgba(57,255,90,.4);position:relative;letter-spacing:1px}
+  h1 .cur{color:var(--green);animation:none}
+  .tag{font-size:21px;color:var(--ink-dim);margin-top:14px;position:relative}
+  .tag b{color:var(--ink)}
+
+  /* a small rail-segment strip echoing the viewer */
+  .segs{position:absolute;right:64px;bottom:128px;display:flex;gap:8px}
+  .seg{font-size:12px;padding:3px 12px;border-radius:6px;border:1px solid var(--line);color:var(--ink-dim)}
+  .seg.done{border-color:var(--green-dim);color:var(--green)}
+  .seg.cur{border-color:var(--amber);color:var(--amber);box-shadow:0 0 10px rgba(255,184,77,.3)}
+  .seg.next{border-color:var(--blue);color:var(--blue)}
+</style>
+</head>
+<body>
+<div class="banner" id="b">
+  <div class="segs">
+    <span class="seg done">1 ✓</span>
+    <span class="seg done">2 ✓</span>
+    <span class="seg cur">3 ◉</span>
+    <span class="seg next">4 →</span>
+  </div>
+
+  <div class="eyebrow">roadmap · status · orchestration</div>
+  <h1>Trackbed<span class="cur">_</span></h1>
+  <div class="tag">Keep the <b>rails</b>. Lose the train.</div>
+
+  <div class="rails">
+    <div class="line top"></div>
+    <div class="line bot"></div>
+    <div id="ties"></div>
+  </div>
+</div>
+<script>
+  // lay sleeper ties evenly across the width
+  const ties=document.getElementById("ties");
+  for(let x=10;x<1200;x+=42){ const t=document.createElement("div"); t.className="tie"; t.style.left=x+"px"; ties.appendChild(t); }
+</script>
+</body>
+</html>
