@@ -99,18 +99,23 @@ WANT_CC=0
 WANT_OC=0
 
 say "Trackbed installer"
-say "Install for which runtime?"
+say "Install for which runtime(s)?"
 say "  1) Claude Code"
 say "  2) OpenCode"
-say "  3) Both"
-printf 'Choice [1/2/3]: '
+say "Select one or more (e.g. '1', '2', or '1 2' / '1,2' for both)."
+printf 'Choice: '
 read -r choice
-case "$choice" in
-  1) WANT_CC=1 ;;
-  2) WANT_OC=1 ;;
-  3) WANT_CC=1; WANT_OC=1 ;;
-  *) err "invalid choice: $choice" ;;
-esac
+
+# Accept space- or comma-separated selections (1, 2, "1 2", "1,2", ...).
+for n in ${choice//,/ }; do
+  case "$n" in
+    1) WANT_CC=1 ;;
+    2) WANT_OC=1 ;;
+    *) err "invalid choice: '$n' (pick 1 and/or 2)" ;;
+  esac
+done
+
+[ "$WANT_CC" -eq 1 ] || [ "$WANT_OC" -eq 1 ] || err "no runtime selected"
 
 # --- uninstall ---------------------------------------------------------------
 
