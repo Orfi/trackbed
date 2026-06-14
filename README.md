@@ -12,7 +12,11 @@ It keeps the one genuinely valuable thing from heavier planning frameworks — t
 
 ## Why
 
-Planning frameworks tend to couple the **route** (the ordered plan you want to keep) to the **engine** (the heavy machinery that drives execution). Trackbed splits them. You keep a durable, re-readable roadmap that the executor cannot jump off of — "the rails the car can't jump" — without paying for an execution engine you didn't want. Any executor can drive; the roadmap stays authoritative.
+Trackbed started as a question about [GSD](https://github.com/glamp/get-shit-done): which part of it is actually valuable, and which part is just machinery you have to adopt wholesale? The valuable part is the **route and manifest** — an ordered set of phases with dependencies, explicit done-criteria, "what's owed", and per-phase memory that carries forward across the whole epic. The machinery is the heavy, opinionated execution engine bolted to it. Trackbed keeps the first and drops the second: **keep the rails, lose the train.**
+
+That split is what makes it **resilient about the executor**. Trackbed never implements a phase itself — it owns the roadmap and hands each phase to whatever you prefer to drive planning, design, and implementation: [Superpowers](https://github.com/obra/superpowers), vanilla Claude Code, OpenCode, or a Copilot agent. The roadmap stays the single source of truth the executor can't jump off — "the rails the car can't jump."
+
+For Superpowers specifically, this fills the one gap it has. Superpowers is excellent at planning and executing a **single feature** — `writing-plans` produces one plan file of bite-sized tasks, and `executing-plans` / `subagent-driven-development` walk them. But that plan is scoped to one feature; there is no layer **above** it that orders many features/stories, tracks dependencies between them, and remembers where you are across the whole epic. That cross-feature roadmap is exactly what Trackbed supplies — so Superpowers keeps doing what it does best, and Trackbed gives it the route to follow.
 
 ## How it works
 
