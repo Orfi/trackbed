@@ -18,7 +18,7 @@ Planning frameworks tend to couple the **route** (the ordered plan you want to k
 
 Trackbed has two stages:
 
-1. **Initialization** (optional, run-once) — turns an epic or project into a roadmap (and tickets, where applicable). Skippable if a roadmap already exists.
+1. **Initialization** (optional, run-once) — turns an epic or project into a roadmap through an ordered pipeline: an optional **PRD** (read or drafted), an optional **ADR** pass (read existing decisions, or gap-fill new ones — `read` / `read-create` / `skip`), the **roadmap** itself, and **tickets** where applicable. Skippable if a roadmap already exists.
 2. **Orchestration** (ongoing) — owns the roadmap + status + per-phase notes, computes the next unblocked phase, hands it to the executor, records progress, and absorbs runtime changes to the roadmap.
 
 ### Anchors
