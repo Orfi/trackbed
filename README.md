@@ -31,8 +31,8 @@ Trackbed has two stages:
 
 Every roadmap hangs off an **anchor**:
 
-- **`epic`** — keyed by a Jira epic key (e.g. `PANV-60446`). Phases map to Jira stories; ticketing is part of the flow.
-- **`project`** — keyed by a slug (e.g. `sonofanton`) for a small app with no epic. Phases are local stories/tasks; **Jira is optional**. No fake/dummy epic is ever created.
+- **`epic`** — keyed by a Jira epic key (e.g. `DEMO-100`). Phases map to Jira stories; ticketing is part of the flow.
+- **`project`** — keyed by a slug (e.g. `acme-app`) for a small app with no epic. Phases are local stories/tasks; **Jira is optional**. No fake/dummy epic is ever created.
 
 The anchor key names the working directory `.trackbed/<key>/`.
 
@@ -46,6 +46,7 @@ One planning front door, two hidden internal skills, and a shared ADR specialist
 | `trackbed-init` | hidden (`user-invocable: false`) | One-time planning: PRD → ADR → roadmap → tickets, and lock the storage format. Skippable. |
 | `trackbed-orchestrate` | hidden (`user-invocable: false`) | Living roadmap + status + notes; compute next phase; hand off; record; absorb runtime mutations. |
 | `trackbed-adr` | **user-invocable** (shared) | Read existing ADRs, gap-fill new ones. Used by init, or run standalone on a story/epic/project that needs only ADRs — no roadmap required. |
+| `trackbed-view` | **user-invocable** | Open the roadmap viewer in the browser — regenerates a self-contained HTML page (phase board + rail + dependency graph) from the live roadmap, then opens it. Read-only. |
 
 ## Usage
 
@@ -53,12 +54,20 @@ One planning front door, two hidden internal skills, and a shared ADR specialist
 /trackbed <jira-epic-key | project-slug>
 ```
 
-- `/trackbed PANV-60446` — start or resume Trackbed on a Jira epic.
-- `/trackbed sonofanton` — start or resume a standalone project roadmap (no epic).
+- `/trackbed DEMO-100` — start or resume Trackbed on a Jira epic.
+- `/trackbed acme-app` — start or resume a standalone project roadmap (no epic).
 
 The front door reads the anchor, checks for an existing roadmap under `.trackbed/<key>/`, then routes to **init** (if nothing exists) or straight to **orchestration** (if a roadmap is already there).
 
 > A single Jira **story** has no roadmap — Trackbed does not apply to it. Stories go straight to execution; they may borrow `trackbed-adr` standalone for decision intake. `trackbed-adr` also runs standalone on an epic or project when you only want ADRs surfaced or created and aren't building a roadmap.
+
+## Visualization
+
+The roadmap is just data — so Trackbed can draw it. `trackbed-view` regenerates a **single self-contained HTML file** (`.trackbed/<key>/roadmap.html`) from the live roadmap and opens it in your browser. No build, no server, one file. It renders three lenses of the same data: a **phase board** (story name + colour-coded status + Jira key — state and the phase↔ticket mapping made visual), a **rail strip**, and a **dependency graph** with the current phase highlighted.
+
+![Trackbed roadmap viewer](assets/roadmap-viz.png)
+
+It stays in sync automatically: `trackbed-orchestrate` regenerates the file on every status change or roadmap mutation, and `/trackbed-view <key>` opens it on demand between turns. The viewer is always a projection of the roadmap — never a second source of truth.
 
 ## The format switch
 
@@ -129,15 +138,13 @@ claude/                       # Claude Code surface
     ├── trackbed/SKILL.md
     ├── trackbed-init/SKILL.md
     ├── trackbed-orchestrate/SKILL.md
-    └── trackbed-adr/SKILL.md
+    ├── trackbed-adr/SKILL.md
+    └── trackbed-view/        # SKILL.md + roadmap-template.html (the viewer)
 opencode/                     # OpenCode surface (command only — skills shared with claude/)
 └── commands/trackbed.md
 copilot/                      # GitHub Copilot CLI surface (own skill copy, executor text adapted)
-└── skills/
-    ├── trackbed/SKILL.md
-    ├── trackbed-init/SKILL.md
-    ├── trackbed-orchestrate/SKILL.md
-    └── trackbed-adr/SKILL.md
+└── skills/ (trackbed, trackbed-init, trackbed-orchestrate, trackbed-adr, trackbed-view)
+viz/roadmap.html              # the roadmap viewer template (sample data, opens standalone)
 install.sh
 ```
 
@@ -167,5 +174,5 @@ Spec and skills authored. See [`trackbed-spec.md`](trackbed-spec.md) for the ful
 ### Out of scope (parked)
 
 - QML visualization (DAG / Gantt lenses).
-- SonOfAnton integration — Trackbed ships standalone first; the app can read the same files later.
+- Acme App integration — Trackbed ships standalone first; the app can read the same files later.
 - Pulling actuals from Jira (sprint dates) for a real Gantt.

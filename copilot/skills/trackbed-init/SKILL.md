@@ -12,7 +12,7 @@ Skip yourself entirely if a roadmap already exists (`trackbed` will have routed 
 ## Anchor — epic vs project
 
 - **`epic`** — `<key>` is a Jira epic key. The epic is the source of stories; ticketing is part of the flow.
-- **`project`** — `<key>` is a slug (e.g. `sonofanton`) for a small app with no epic. There is no epic to read; phases come from the user. **Jira is optional** — phases may stay 100% local, or be linked/created if the user wants.
+- **`project`** — `<key>` is a slug (e.g. `acme-app`) for a small app with no epic. There is no epic to read; phases come from the user. **Jira is optional** — phases may stay 100% local, or be linked/created if the user wants.
 
 `<key>` names the working directory `.trackbed/<key>/` in both anchors. Wherever a step below says "the epic", read it as "the epic (epic anchor) or the project (project anchor)".
 
@@ -30,11 +30,11 @@ Before step 1, ensure the per-roadmap manifest exists at **`.trackbed/<key>/mani
 
 ```yaml
 anchor: epic | project    # from trackbed — which kind of roadmap this is
-key: PANV-60446           # epic key (epic anchor) or project slug (project anchor)
+key: DEMO-100           # epic key (epic anchor) or project slug (project anchor)
 format: gsd | native      # set in step 3 — locked for the life of the roadmap
 shape: populated | greenfield   # set in step 0 (project anchor is always greenfield)
 adr_mode: read | read-create | skip   # set in step 2 — default: read
-prd_path: docs/PRD-PANV-60446.md   # set in step 1 (may be absent in project anchor)
+prd_path: docs/PRD-DEMO-100.md   # set in step 1 (may be absent in project anchor)
 adr_path: docs/adr/                 # set in step 2 (may be external/untracked; absent if adr_mode=skip)
 roadmap_path: .planning/ROADMAP.md  # set in step 3 — see step 3 for per-mode value
 created: 2026-06-13
@@ -110,10 +110,10 @@ Build the **ordered phases**, branching on the `shape` from Step 0. Either way, 
 
 ```yaml
 anchor: epic              # or: project
-key: PANV-60446           # epic key, or project slug (e.g. sonofanton)
+key: DEMO-100           # epic key, or project slug (e.g. acme-app)
 phases:
   - id: "11.1"
-    scope: "BFF API-key validation — remove Identity HTTP fallback"
+    scope: "API-key validation — remove legacy auth fallback"
     depends: []
     done: "code + gates"
     jira:                  # left empty here — ticketed in step 4 (optional under a project anchor)
@@ -127,7 +127,7 @@ phases:
 
 ```yaml
 anchor: epic
-key: PANV-60446
+key: DEMO-100
 current:
   phase: "11.1"            # fast pointer; the authoritative status still lives on the phase
   status: ready-to-plan    # ready-to-plan | planning | in-progress | phase-complete

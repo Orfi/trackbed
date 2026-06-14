@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trackbed — roadmap</title>
+<!--
+  Trackbed roadmap — a single self-contained file. Open it in any browser.
+
+  Everything below the DATA block is generic rendering. To show YOUR roadmap,
+  replace the DATA object with your phases (or let `trackbed-orchestrate`
+  regenerate this file from the roadmap on each update). No build, no server.
+-->
+<style>
+  :root{
+    --bg:#0b0f0a; --panel:#11160f; --panel2:#0e130d; --ink:#d6e8c8; --ink-dim:#8fa882;
+    --green:#39ff5a; --green-dim:#2bbf45; --amber:#ffb84d; --red:#ff6b6b; --blue:#7fd1ff;
+    --line:#1f2a18;
+    --mono:"Cascadia Code",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --sans:"Segoe UI",Inter,system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.6;
+    background-image:radial-gradient(1200px 600px at 80% -10%, rgba(57,255,90,.06), transparent),
+                     radial-gradient(900px 500px at -10% 110%, rgba(127,209,255,.05), transparent);}
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 26px 80px}
+  h1{font-family:var(--mono);font-size:30px;margin:0 0 2px;color:#eafff0;text-shadow:0 0 18px rgba(57,255,90,.25)}
+  h1 .blink{color:var(--green);animation:blink 1.1s steps(2) infinite}
+  @keyframes blink{50%{opacity:0}}
+  .tagline{font-size:15px;color:var(--ink-dim);margin:0 0 8px}
+  .head{font-family:var(--mono);font-size:13px;color:var(--ink-dim);margin:14px 0 22px}
+  .head b{color:var(--green-dim)}
+  h2{font-family:var(--mono);font-size:18px;color:#eafff0;margin:32px 0 10px;display:flex;align-items:center;gap:10px}
+  h2 .n{color:var(--green);font-size:12px;border:1px solid var(--green-dim);border-radius:6px;padding:2px 7px}
+  .sub{color:var(--ink-dim);font-size:13.5px}
+
+  /* phase board — the centerpiece: story name + color status + jira mapping */
+  .board{display:flex;flex-direction:column;gap:8px}
+  .pcard{display:grid;grid-template-columns:120px 1fr auto;gap:14px;align-items:center;
+    background:var(--panel);border:1px solid var(--line);border-left-width:4px;border-radius:10px;padding:12px 16px}
+  .pcard.done{border-left-color:var(--green-dim)}
+  .pcard.cur{border-left-color:var(--amber);box-shadow:0 0 0 1px rgba(255,184,77,.15)}
+  .pcard.next{border-left-color:var(--blue)}
+  .pcard.block{border-left-color:var(--red)}
+  .pcard.todo{border-left-color:var(--line)}
+  .pcard.clk{cursor:pointer}
+  .pcard.clk:hover{border-color:var(--green-dim)}
+  .pid{font-family:var(--mono);font-size:14px;color:var(--ink);display:flex;align-items:center;gap:8px}
+  .badge{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;
+    padding:2px 8px;border-radius:20px;border:1px solid}
+  .badge.done{color:var(--green);border-color:var(--green-dim)}
+  .badge.cur{color:var(--amber);border-color:var(--amber)}
+  .badge.next{color:var(--blue);border-color:var(--blue)}
+  .badge.block{color:var(--red);border-color:var(--red)}
+  .badge.todo{color:var(--ink-dim);border-color:var(--line)}
+  .story{font-size:14px;color:var(--ink)}
+  .story .ins{color:var(--amber);font-family:var(--mono);font-size:11px;margin-left:6px}
+  .pmeta{font-family:var(--mono);font-size:11.5px;color:var(--ink-dim);margin-top:3px}
+  .pmeta .owe{color:var(--red)}
+  .pmeta .dep{color:var(--blue)}
+  .jira{font-family:var(--mono);font-size:12px;color:var(--green-dim);white-space:nowrap;text-align:right}
+  .jira .none{color:var(--ink-dim)}
+
+  .rail{font-family:var(--mono);font-size:13px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:16px;line-height:2.4}
+  .seg{display:inline-block;padding:3px 11px;border-radius:6px;border:1px solid var(--line);margin:3px;white-space:nowrap}
+  .seg.clk{cursor:pointer}
+  .seg.done{border-color:var(--green-dim);color:var(--green)}
+  .seg.cur{border-color:var(--amber);color:var(--amber);box-shadow:0 0 10px rgba(255,184,77,.25)}
+  .seg.block{border-color:var(--red);color:var(--red)}
+  .seg.next{border-color:var(--blue);color:var(--blue)}
+  .seg.todo{color:var(--ink-dim)}
+
+  .dagwrap{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px;overflow-x:auto;overflow-y:hidden;scrollbar-color:var(--green-dim) var(--panel2)}
+  .dagwrap::-webkit-scrollbar{height:10px}
+  .dagwrap::-webkit-scrollbar-thumb{background:var(--green-dim);border-radius:6px}
+  .dagwrap::-webkit-scrollbar-track{background:var(--panel2)}
+  svg{display:block}
+  .node text{font-family:var(--mono);fill:var(--ink);pointer-events:none}
+  .node .scope{fill:var(--ink-dim);font-size:10px}
+  .node.clk{cursor:pointer}
+  .node.cur rect{animation:pulse 1.8s ease-in-out infinite}
+  @keyframes pulse{0%,100%{filter:drop-shadow(0 0 5px rgba(255,184,77,.45))}50%{filter:drop-shadow(0 0 14px rgba(255,184,77,.85))}}
+  .edge{fill:none;stroke:#2a3a20;stroke-width:1.5}
+  .edge.crit{stroke:var(--amber);stroke-dasharray:4 3}
+
+  .legend{display:flex;flex-wrap:wrap;gap:14px;font-family:var(--mono);font-size:12px;color:var(--ink-dim);margin-top:10px}
+  .legend .k{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:11px;height:11px;border-radius:3px;border:1px solid}
+  .sw.done{border-color:var(--green-dim);background:rgba(57,255,90,.18)}
+  .sw.cur{border-color:var(--amber);background:rgba(255,184,77,.18)}
+  .sw.next{border-color:var(--blue);background:rgba(127,209,255,.18)}
+  .sw.block{border-color:var(--red);background:rgba(255,107,107,.18)}
+  .sw.todo{border-color:var(--ink-dim);background:transparent}
+
+  #tip{position:fixed;pointer-events:none;z-index:10;background:#070a06;border:1px solid var(--green-dim);border-radius:8px;
+    padding:10px 12px;font-family:var(--mono);font-size:12px;max-width:320px;color:var(--ink);box-shadow:0 8px 30px rgba(0,0,0,.5);display:none;line-height:1.5}
+  #tip b{color:var(--green)} #tip .dim{color:var(--ink-dim)}
+  footer{margin-top:50px;border-top:1px solid var(--line);padding-top:16px;font-family:var(--mono);font-size:11.5px;color:var(--ink-dim)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Trackbed<span class="blink">_</span></h1>
+  <p class="tagline">The roadmap, drawn. Same data, two lenses — the rail strip and the dependency graph.</p>
+  <div class="head" id="head"></div>
+
+  <h2><span class="n">A</span> Phases</h2>
+  <div class="board" id="board"></div>
+
+  <h2><span class="n">B</span> Rail view</h2>
+  <div class="rail" id="rail"></div>
+  <div class="legend">
+    <span class="k"><span class="sw done"></span> done</span>
+    <span class="k"><span class="sw cur"></span> current</span>
+    <span class="k"><span class="sw next"></span> next (computed)</span>
+    <span class="k"><span class="sw block"></span> blocked</span>
+    <span class="k"><span class="sw todo"></span> todo</span>
+  </div>
+
+  <h2><span class="n">C</span> Dependency graph</h2>
+  <div class="dagwrap"><svg id="dag" width="1040" height="360"></svg></div>
+  <p class="sub">Phases flow left→right by dependency depth; an edge points from a dependency to the phase that needs it. Amber dashed = an unmet dependency. Hover any phase for detail; click one to open its Jira ticket (when a key and base URL are set).</p>
+
+  <footer>
+    Trackbed roadmap · ordered by dotted-segment id (1 → 1.1 → 1.2 → 2) · "next" is computed, never stored · regenerate via <code>trackbed-orchestrate</code>.
+  </footer>
+</div>
+<div id="tip"></div>
+
+<script>
+"use strict";
+
+/* ================= DATA — replace this block with your roadmap ================= *
+ * This is the only part that changes per roadmap. It mirrors the native
+ * roadmap.yml shape. `trackbed-orchestrate` can rewrite it on each update.    */
+const DATA = {
+  anchor: "epic",
+  key: "DEMO-100",
+  jiraBase: "",           // e.g. "https://acme.atlassian.net/browse" → clickable nodes
+  phases: [
+    { id:"1",   scope:"Project scaffolding",        depends:[],          done:"builds + CI green", jira:"DEMO-101", status:"done" },
+    { id:"2",   scope:"Data model",                 depends:["1"],       done:"schema + migrations", jira:"DEMO-102", status:"done" },
+    { id:"3",   scope:"Core API",                    depends:["2"],       done:"endpoints + tests", jira:"DEMO-103", status:"current", owes:["integration tests"] },
+    { id:"3.1", scope:"Auth hardening (inserted)",   depends:["3"],       done:"code + review", jira:"DEMO-110", status:"todo", inserted:true },
+    { id:"4",   scope:"Web UI",                       depends:["3"],       done:"screens wired", jira:"DEMO-104", status:"todo" },
+    { id:"5",   scope:"Notifications",               depends:["3"],       done:"send + retry", jira:"DEMO-105", status:"todo" },
+    { id:"6",   scope:"Reporting",                    depends:["4","5"],   done:"charts + export", jira:"DEMO-106", status:"blocked", owes:["UI", "data feed"] },
+    { id:"7",   scope:"Hardening & QA",              depends:["6"],       done:"e2e suite passes", jira:"DEMO-107", status:"todo" },
+    { id:"8",   scope:"Launch",                       depends:["7"],       done:"deployed to prod", jira:"DEMO-108", status:"todo" }
+  ]
+};
+/* =============================================================================== */
+
+const ICON = {done:"✓",cur:"◉",block:"⛔",next:"→",todo:""};
+
+function cmpId(a,b){
+  const x=String(a).split(".").map(Number), y=String(b).split(".").map(Number);
+  for(let i=0;i<Math.max(x.length,y.length);i++){ const d=(x[i]||0)-(y[i]||0); if(d) return d; }
+  return 0;
+}
+
+function decorate(d){
+  d.phases.forEach(p=>{ p.depends=(p.depends||[]).map(String); p.owes=p.owes||[]; p.id=String(p.id); p.status=(p.status||"todo").toLowerCase(); });
+  const byId=Object.fromEntries(d.phases.map(p=>[p.id,p]));
+  const isDone=id=>byId[id]&&byId[id].status==="done";
+  const ordered=[...d.phases].sort((a,b)=>cmpId(a.id,b.id));
+  let nextId=null;
+  for(const p of ordered){
+    if(["done","blocked","current"].includes(p.status)) continue;
+    if(p.depends.every(isDone)){ nextId=p.id; break; }
+  }
+  ordered.forEach(p=>{
+    p._eff = p.status==="done"?"done":p.status==="current"?"cur":p.status==="blocked"?"block":p.id===nextId?"next":"todo";
+  });
+  return {ordered,byId};
+}
+
+function jbase(){ return (DATA.jiraBase||"").trim().replace(/\/$/,""); }
+function esc(s){return String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
+
+const tip=document.getElementById("tip");
+function wireTip(el,p){
+  el.addEventListener("mousemove",e=>{
+    tip.style.display="block";
+    tip.style.left=Math.min(e.clientX+14,window.innerWidth-340)+"px";
+    tip.style.top=(e.clientY+14)+"px";
+    tip.innerHTML=`<b>Phase ${p.id}</b>${p.inserted?' <span class="dim">(inserted)</span>':''}<br>${esc(p.scope||"—")}<br>`+
+      `<span class="dim">status:</span> ${p._eff==="next"?"todo → next":p.status}<br>`+
+      `<span class="dim">depends:</span> ${p.depends.length?p.depends.join(", "):"none"}<br>`+
+      (p.done?`<span class="dim">done:</span> ${esc(p.done)}<br>`:"")+
+      (p.owes.length?`<span class="dim">owes:</span> ${p.owes.join(", ")}<br>`:"")+
+      (p.jira?`<span class="dim">jira:</span> ${p.jira}`:"");
+  });
+  el.addEventListener("mouseleave",()=>tip.style.display="none");
+}
+function wireClick(el,p){ el.addEventListener("click",()=>{ if(p.jira&&jbase()) window.open(jbase()+"/"+p.jira,"_blank"); }); }
+
+const LABEL={done:"done",cur:"current",next:"next",block:"blocked",todo:"todo"};
+
+function renderHead(){
+  document.getElementById("head").innerHTML=`<b>${DATA.anchor||"roadmap"}</b> ${DATA.key||""} ▸ <span class="sub">${DATA.phases.length} phases</span>`;
+}
+function renderBoard(ordered){
+  const board=document.getElementById("board"); board.innerHTML="";
+  ordered.forEach(p=>{
+    const row=document.createElement("div");
+    row.className="pcard "+p._eff+(p.jira&&jbase()?" clk":"");
+    const dep=p.depends.length?`<span class="dep">depends ${p.depends.join(", ")}</span>`:"";
+    const owe=p.owes.length?`${p.depends.length?" · ":""}<span class="owe">owes ${p.owes.join(", ")}</span>`:"";
+    const done=p.done?`${(p.depends.length||p.owes.length)?" · ":""}done: ${esc(p.done)}`:"";
+    row.innerHTML=
+      `<div class="pid"><span class="badge ${p._eff}">${LABEL[p._eff]}</span> ${p.id}</div>`+
+      `<div><div class="story">${esc(p.scope||"—")}${p.inserted?'<span class="ins">✦ inserted</span>':''}</div>`+
+        `<div class="pmeta">${dep}${owe}${done}</div></div>`+
+      `<div class="jira">${p.jira?esc(p.jira):'<span class="none">— local —</span>'}</div>`;
+    wireTip(row,p); wireClick(row,p); board.appendChild(row);
+  });
+}
+function renderRail(ordered){
+  const rail=document.getElementById("rail"); rail.innerHTML="";
+  ordered.forEach(p=>{
+    const s=document.createElement("span");
+    s.className="seg "+p._eff+(p.jira&&jbase()?" clk":"");
+    const ins=p.inserted?"✦":"";
+    const tail=p._eff==="cur"?" current":p._eff==="next"?" next":p._eff==="block"&&p.owes.length?` owes ${p.owes.join(",")}`:"";
+    s.textContent=`${ins}${p.id} ${ICON[p._eff]}${tail}`.trim();
+    wireTip(s,p); wireClick(s,p); rail.appendChild(s);
+  });
+}
+function renderDag(ordered,byId){
+  const layer={};
+  const depth=id=>{ if(layer[id]!=null) return layer[id]; const p=byId[id]; if(!p) return 0;
+    return layer[id]=p.depends.length?1+Math.max(...p.depends.map(depth)):0; };
+  ordered.forEach(p=>depth(p.id));
+  const cols={}; ordered.forEach(p=>{ (cols[layer[p.id]] ||= []).push(p); });
+  const COLW=232,ROWH=104,NW=200,NH=74,PADX=22,PADY=26;
+  const maxRow=Math.max(...Object.values(cols).map(c=>c.length));
+  const nLayers=Math.max(...Object.keys(cols).map(Number))+1;
+  const W=Math.max(1040,PADX*2+nLayers*COLW), H=Math.max(240,PADY*2+maxRow*ROWH);
+  const svg=document.getElementById("dag"); svg.setAttribute("width",W); svg.setAttribute("height",H);
+  const COLOR={done:"var(--green-dim)",cur:"var(--amber)",block:"var(--red)",next:"var(--blue)",todo:"#3a4a30"};
+  const pos={};
+  Object.entries(cols).forEach(([L,arr])=>{ arr.sort((a,b)=>cmpId(a.id,b.id)); arr.forEach((p,r)=>{ pos[p.id]={x:PADX+Number(L)*COLW,y:PADY+r*ROWH}; }); });
+
+  // wrap a story name into up to 2 lines that fit the node width (~24 chars/line)
+  const wrap=(s,max=24,maxLines=2)=>{
+    const words=String(s||"").split(/\s+/); const lines=[]; let cur="";
+    for(const w of words){ if((cur+" "+w).trim().length>max){ if(cur)lines.push(cur); cur=w; } else cur=(cur+" "+w).trim(); }
+    if(cur)lines.push(cur);
+    if(lines.length>maxLines){ lines.length=maxLines; lines[maxLines-1]=lines[maxLines-1].replace(/.{1}$/,"…"); }
+    return lines;
+  };
+
+  let edges="",nodes="";
+  ordered.forEach(p=>p.depends.forEach(d=>{ if(!pos[d])return;
+    const a=pos[d],b=pos[p.id],x1=a.x+NW,y1=a.y+NH/2,x2=b.x,y2=b.y+NH/2,mx=(x1+x2)/2;
+    const crit=byId[d]&&byId[d]._eff!=="done"?" crit":"";
+    edges+=`<path class="edge${crit}" d="M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}"/>`; }));
+  ordered.forEach(p=>{ const {x,y}=pos[p.id],c=COLOR[p._eff];
+    const isCur=p._eff==="cur";
+    const clk=p.jira&&jbase()?" clk":"";
+    const fill=isCur?"rgba(255,184,77,.12)":"rgba(255,255,255,.02)";
+    const sw=isCur?2.5:1.5;
+    const lines=wrap(p.scope);
+    const storyText=lines.map((ln,i)=>`<text class="scope" x="12" y="${40+i*13}">${esc(ln)}</text>`).join("");
+    const tag=isCur?`<text x="${NW-12}" y="20" text-anchor="end" font-size="10" fill="${c}" font-family="var(--mono)" letter-spacing=".5">◉ CURRENT</text>`:"";
+    nodes+=`<g class="node${isCur?" cur":""}${clk}" data-id="${p.id}" transform="translate(${x},${y})">
+      <rect width="${NW}" height="${NH}" rx="9" ry="9" fill="${fill}" stroke="${c}" stroke-width="${sw}"/>
+      <text x="12" y="22" font-size="14" fill="${c}" font-family="var(--mono)" font-weight="600">${p.inserted?"✦ ":""}${p.id} ${ICON[p._eff]||""}</text>
+      ${tag}${storyText}</g>`; });
+  svg.innerHTML=edges+nodes;
+  svg.querySelectorAll(".node").forEach(g=>{ const p=byId[g.getAttribute("data-id")]; wireTip(g,p); wireClick(g,p); });
+}
+
+const {ordered,byId}=decorate(DATA);
+renderHead(); renderBoard(ordered); renderRail(ordered); renderDag(ordered,byId);
+</script>
+</body>
+</html>

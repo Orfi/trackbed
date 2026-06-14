@@ -87,13 +87,13 @@
 <div class="wrap">
 
   <header class="hero">
-    <div class="eyebrow">Companion concept &nbsp;·&nbsp; can stand alone or fold into SonOfAnton</div>
+    <div class="eyebrow">Companion concept &nbsp;·&nbsp; can stand alone or fold into Acme App</div>
     <h1>Trackbed<span class="blink">_</span></h1>
     <p class="tagline">A deliberately thin <b>roadmap + status</b> layer that gives Superpowers the one thing it lacks — <b>a route</b> — without the weight of GSD. <em>Keep the rails. Lose the train.</em></p>
     <div class="meta">
-      <span><b>Origin:</b> the GSD/Superpowers split lived on Panviva Core</span>
+      <span><b>Origin:</b> the GSD/Superpowers split lived on a production codebase</span>
       <span><b>Status:</b> <span class="pulse"></span> idea — pre-build</span>
-      <span><b>Relation:</b> may be SonOfAnton's orchestration backbone</span>
+      <span><b>Relation:</b> may be Acme App's orchestration backbone</span>
     </div>
   </header>
 
@@ -116,7 +116,7 @@
 
   <h2><span class="n">02</span> Why this exists</h2>
   <p class="lead">Tried GSD — too heavy (train/tank). Needed the resilience of Superpowers (racing car). But the <b>one</b> thing worth keeping from GSD is its <b>roadmap + status</b>: organizing stories within an epic, ordering, dependencies, "what's owed."</p>
-  <p>This pattern is already proven by hand on Panviva Core — the project's own rule: <em>"GSD = state and roadmap management ONLY. Superpowers = phase-level execution. These two do not overlap."</em> It ran 11+ phases that way. Trackbed just makes that half <b>thin and owned</b> instead of carried on GSD's back.</p>
+  <p>This pattern is already proven by hand on a production codebase — the project's own rule: <em>"GSD = state and roadmap management ONLY. Superpowers = phase-level execution. These two do not overlap."</em> It ran 11+ phases that way. Trackbed just makes that half <b>thin and owned</b> instead of carried on GSD's back.</p>
 
   <div class="callout">
     <span class="k">Prior art check</span>
@@ -138,7 +138,7 @@
   <p class="sub"><b>Three conventions:</b> phase numbering (incl. decimals like <code>11.2</code> for insertions) · dependency edges · an explicit <b>"done = X"</b> per phase. Everything else in GSD is the heaviness being rejected.</p>
 
   <div class="rail">
-    epic PANV-60446 ▸
+    epic DEMO-100 ▸
     <span class="seg done">11.1 ✓</span>
     <span class="seg done">11.3 ✓</span>
     <span class="seg cur">11.2 ◉ current</span>
@@ -160,7 +160,7 @@
       <p class="sub">Drop GSD. Own a simpler two-file format (no <code>gsd_state_version</code> cruft) + a tiny helper: read "next unblocked phase" → hand to Superpowers <code>brainstorming</code>/<code>executing-plans</code>. A few hundred lines, fully yours, debuggable, no heaviness.</p>
     </div>
     <div class="card">
-      <h3>3 · Backbone of SonOfAnton</h3>
+      <h3>3 · Backbone of Acme App</h3>
       <p class="sub">Same data model the app already needs for its status strip + button-gating. "Next phase / whose turn / what's owed" <b>is</b> what a control panel reads. Build once, use in both.</p>
     </div>
   </div>
@@ -168,18 +168,18 @@
   <h2><span class="n">05</span> The thin format (sketch)</h2>
   <p class="sub">Illustrative only — the point is how little it is. One roadmap, one state pointer.</p>
   <pre><span class="c"># roadmap.yml — the rails</span>
-epic: PANV-60446
+epic: DEMO-100
 phases:
-  - id: <span class="b">11.2</span>   jira: PANV-61955   <span class="g">done: code+gates</span>   depends: [11.1]
-    scope: "BFF API-key validation — remove Identity HTTP fallback"
-  - id: <span class="b">11.4</span>   jira: PANV-62093   status: <span class="a">next</span>        depends: [11.3]
-    scope: "RedisContainerMapWriter — restore Marten writer (OCP)"
-  - id: <span class="b">13</span>     jira: PANV-61405   status: blocked     depends: [11.2]
+  - id: <span class="b">11.2</span>   jira: DEMO-102   <span class="g">done: code+gates</span>   depends: [11.1]
+    scope: "API-key validation â remove legacy auth fallback"
+  - id: <span class="b">11.4</span>   jira: DEMO-104   status: <span class="a">next</span>        depends: [11.3]
+    scope: "Cache writer â restore persistence layer (OCP)"
+  - id: <span class="b">13</span>     jira: DEMO-106   status: blocked     depends: [11.2]
     owes: [e2e, shell-regression]        <span class="c"># a red signal</span>
 
 <span class="c"># state.yml — the signals (one pointer + what's owed)</span>
 current: 11.2
-turn: architect            <span class="c"># whose move (SonOfAnton reads this)</span>
+turn: architect            <span class="c"># whose move (Acme App reads this)</span>
 owed: { 11.2: [e2e, shell-regression] }</pre>
   <p class="sub">A ~few-hundred-line helper answers exactly three questions: <b>what's the next unblocked phase?</b> · <b>what does this phase owe before it's done?</b> · <b>hand this phase to Superpowers and mark it in-progress.</b> That's the whole engine.</p>
 
@@ -188,13 +188,13 @@ owed: { 11.2: [e2e, shell-regression] }</pre>
 
   <div class="callout green">
     <span class="k">Core principle — two views, one model</span>
-    The DAG view and the Gantt view are <b>the same roadmap rendered two ways</b>. You're not adding data, you're adding lenses. And both are the <b>same component SonOfAnton's status strip uses</b> — Trackbed's roadmap view <em>is</em> the app's "where are we" board, scaled up. Build the model once; the visuals are skins on it.
+    The DAG view and the Gantt view are <b>the same roadmap rendered two ways</b>. You're not adding data, you're adding lenses. And both are the <b>same component Acme App's status strip uses</b> — Trackbed's roadmap view <em>is</em> the app's "where are we" board, scaled up. Build the model once; the visuals are skins on it.
   </div>
 
   <h3>Lens A — the DAG / rail view <span class="tag must">v0 — data you already have</span></h3>
   <p class="sub">Phases as <b>nodes</b>, dependencies as <b>edges</b>, status as <b>color</b> (palette already maps it). Answers the day-to-day question: <em>what blocks what · what's the critical path · what's parallelizable.</em></p>
   <ul class="sub">
-    <li><b>Click a node → open the Jira ticket</b> — <code>Qt.openUrlExternally("…/browse/PANV-61955")</code>. The roadmap becomes a launchpad, not a picture. (Just needs the key + base URL — no API.)</li>
+    <li><b>Click a node → open the Jira ticket</b> — <code>Qt.openUrlExternally("…/browse/DEMO-102")</code>. The roadmap becomes a launchpad, not a picture. (Just needs the key + base URL — no API.)</li>
     <li><b>Hover → tooltip</b> with scope, what's owed, dependencies — the STATE data surfaced visually instead of buried in a file.</li>
     <li><b>Edges are the real win:</b> markdown <em>says</em> "11.4 depends-on 11.3"; a drawn DAG <em>shows</em> it — blockers, parallel legs, critical path, at a glance. (We leaned on the phase table constantly this epic — this replaces that.)</li>
     <li><b>Live, not a snapshot:</b> nodes pulse/animate as state changes (current = amber glow, a phase clearing its gates flips green). QML animations are essentially free.</li>
@@ -233,9 +233,9 @@ owed: { 11.2: [e2e, shell-regression] }</pre>
     Superpowers' weakness is it'll execute a <em>great lap of the wrong circuit</em> — drift, carried stale baselines, lost route between segments (exactly what bit us when stale state crept in). So Trackbed's most important job isn't speed — it's being <b>thin but authoritative</b>: the single source of "where we are / what's next / what's done," that the car can't override. Rails the car can't jump.
   </div>
 
-  <h2><span class="n">07</span> Relation to SonOfAnton</h2>
-  <p>Trackbed can ship <b>standalone</b> (CLI + two files, drives Superpowers in a plain terminal) <em>or</em> become <b>SonOfAnton's orchestration backbone</b> — the app's status strip and button-gating are literally Trackbed's signals rendered in QML. Build it standalone first (option 2), and if the app happens, it reads the same files. Nothing wasted either way.</p>
-  <p class="link">↳ companion file: SonOfAnton-idea.html (the two-pane Architect/Executor console)</p>
+  <h2><span class="n">07</span> Relation to Acme App</h2>
+  <p>Trackbed can ship <b>standalone</b> (CLI + two files, drives Superpowers in a plain terminal) <em>or</em> become <b>Acme App's orchestration backbone</b> — the app's status strip and button-gating are literally Trackbed's signals rendered in QML. Build it standalone first (option 2), and if the app happens, it reads the same files. Nothing wasted either way.</p>
+  <p class="link">↳ companion file: Acme App-idea.html (the two-pane Architect/Executor console)</p>
 
   <footer>
     <p>Trackbed — concept brief · the "rails without the train" layer · captured 2026-06-08.<br>
