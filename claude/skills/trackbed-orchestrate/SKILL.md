@@ -21,9 +21,10 @@ The manifest's `anchor` tells you whether this is an `epic` (Jira-backed) or a `
 ## Step 1 — Read the manifest first, then the roadmap
 
 1. Read `.trackbed/<key>/manifest.yml`. It tells you the `anchor` (`epic` | `project`), the `key` (epic key or project slug), the `shape`, the locked `format` (`gsd` | `native`), the `adr_mode`, and the artifact paths (`prd_path`, `adr_path`, `roadmap_path`).
-2. Read the roadmap and status **in the recorded format**:
-   - **gsd** → read GSD's `.planning/` files (`ROADMAP.md` and status/notes alongside it).
+2. Read the roadmap and the **state file** in the recorded format. The state file is the cross-phase digest (current position, blockers, session-continuity) — read it first to restore context:
+   - **gsd** → read GSD's `.planning/ROADMAP.md` plus **`.planning/STATE.md`** (GSD's own state layer) and the status/notes alongside them. The phase↔ticket mapping (if any) lives in `.trackbed/<key>/phase-jira.md`, not in `ROADMAP.md`.
    - **native** → read `.trackbed/<key>/roadmap.yml`, `.trackbed/<key>/state.yml`, and `.trackbed/<key>/notes/` (notes may instead be inlined per phase in `roadmap.yml`).
+   - **If the state file is absent** (an older roadmap predating this convention): create it from the current roadmap — `STATE.md` from GSD's template in gsd mode, `state.yml` with the native schema in native mode — then proceed.
 
 ### If no manifest exists (init was skipped)
 
@@ -35,13 +36,14 @@ The manifest's `anchor` tells you whether this is an `epic` (Jira-backed) or a `
 
 Re-read the roadmap, then:
 
-1. Find the **next unblocked phase**: status not `done`, all `depends` satisfied (every dependency is `done`), and not `blocked`.
-2. Show the **rail view** in dependency order, one line per phase:
-   - **done** — completed
-   - **current** — in progress now
-   - **next** — the next unblocked phase you would hand off
-   - **blocked** — and the **reason** (which dependency or external thing is missing)
-   - **todo** — not yet reachable
+0. **Order the phases.** In **native** mode, sort by **dotted-segment id comparison** — compare ids segment by segment as integers, like version numbers, *not* by numeric value (`3 → 3.1 → 3.2 → 3.2.1 → 3.3 → 4`, arbitrary depth). In **gsd** mode, use GSD's own numeric phase order. This is the canonical walk order.
+1. Find the **next unblocked phase**: walking in that order, the first phase whose status is not `done`, all `depends` satisfied (every dependency is `done`), and not `blocked`. "Next" is **always computed here, never stored** — persisted phase status is only `todo | current | blocked | done`. `depends` gates eligibility; the id order sets the walk.
+2. Show the **rail view** in that order, one line per phase:
+   - **done** — completed (persisted status)
+   - **current** — in progress now (persisted status)
+   - **next** — the computed next phase you would hand off (a *label*, not a stored status — it's the result of step 1)
+   - **blocked** — and the **reason** (persisted status; name the missing dependency or external thing)
+   - **todo** — not yet reachable (persisted status)
 3. **Surface what the current and next phases owe** — the `owes` list (gates not yet run, verification still outstanding). If a phase claims `done` but `owes` is non-empty, call that out.
 
 ## Step 3 — Hand off the phase
@@ -52,10 +54,11 @@ Re-read the roadmap, then:
 
 ## Step 4 — Record progress + per-phase notes
 
-When a phase comes back, update the roadmap (and `state.yml` in native mode):
+When a phase comes back, update the roadmap **and the state file**:
 
 1. **Status** — `done`, or back to `blocked`/`current` with reason. Clear or update `owes`.
 2. **Notes** — narrative per-phase memory: what worked, what didn't, what was **postponed** or **moved to another phase** (name the phase id), implementation notes, and forward notes about future phases.
+3. **State file** — update the cross-phase digest so the next session restores instantly: `STATE.md` in gsd mode, `state.yml` in native mode. Refresh `current` (phase + status), append/clear `blockers`, and update `session` (`stopped_at`, `resume_hint`). Keep it a short digest, not an archive.
 
 Notes are the durable memory of the roadmap — write them even when a phase succeeds cleanly.
 
@@ -63,9 +66,9 @@ Notes are the durable memory of the roadmap — write them even when a phase suc
 
 New phases emerge mid-roadmap — a gap, a regression, a follow-up. When that happens:
 
-1. **Insert with decimal numbering** to preserve order without renumbering — e.g. `11.2` between `11.1` and `11.3`. Set its `scope`, `depends`, and `done`.
-2. **Run the same create/link ticket ask** (see the Jira link states below). Leave `jira:` empty until the user decides; **always ask, never auto-write**.
-3. **Write the new key back** into the roadmap once the user confirms. Keep all ticket text framework-neutral.
+1. **Insert with decimal numbering** to preserve order without renumbering — e.g. `11.2` between `11.1` and `11.3`. Decimals sort by dotted-segment comparison (`3.2.1` falls between `3.2` and `3.3`). Set its `scope`, `depends`, `done`, and `inserted: true` (native mode) to mirror GSD's `(INSERTED)` marker.
+2. **Run the same create/link ticket ask** (see the Jira link states below). Leave the mapping empty until the user decides; **always ask, never auto-write**.
+3. **Write the new key back** into the phase↔ticket mapping once the user confirms — the phase's `jira:` field (native mode) or `.trackbed/<key>/phase-jira.md` (gsd mode). On any roadmap change (insertion, **deletion**, rename), keep that mapping in sync: add/remove the corresponding entry so it never drifts from the roadmap. Keep all ticket text framework-neutral.
 4. If a runtime phase implies an architectural decision, delegate the decision capture to **`trackbed-adr`** before ticketing.
 
 ## Step 6 — Authority
@@ -80,18 +83,19 @@ In native mode each phase in `.trackbed/<key>/roadmap.yml` carries:
 anchor: epic                    # or: project
 key: PANV-60446                 # epic key, or project slug (e.g. sonofanton)
 phases:
-  - id: "11.2"                    # decimal insertions allowed at runtime
+  - id: "11.2"                    # decimal insertions allowed at runtime (dotted-segment sort)
     scope: "BFF API-key validation — remove Identity HTTP fallback"
-    depends: ["11.1"]             # phase ids that must be done first
+    depends: ["11.1"]             # phase ids that must be done first (gates eligibility)
     done: "code + gates"          # explicit done-criteria
-    jira: PANV-61955              # link state — see below
-    status: done | current | next | blocked | todo
+    jira: PANV-61955              # link state — see below (native mode home for the mapping)
+    status: done | current | blocked | todo   # persisted only; "next" is computed, never stored
+    inserted: false               # true for a runtime decimal insertion (mirrors GSD's "(INSERTED)")
     owes: []                      # gates / verification not yet run
     notes: |                      # per-phase memory
       what worked, what didn't, postponed, moved-to-phase, impl notes, forward notes
 ```
 
-In GSD mode the same three layers (route, status, notes) live in `.planning/`; read and update those files instead — do not create native files alongside them.
+In GSD mode the same three layers (route, status, notes) live in `.planning/` — read and update those files instead, and **do not modify GSD's `ROADMAP.md` format**. The one thing `.planning/` has no home for is the phase↔ticket mapping: in GSD mode that lives in the separate Trackbed-owned file **`.trackbed/<key>/phase-jira.md`** (a simple `phase-id → JIRA-KEY` table), never inside `ROADMAP.md`.
 
 ## Jira link states (drives the create/link ask)
 
@@ -103,7 +107,7 @@ In GSD mode the same three layers (route, status, notes) live in `.planning/`; r
 
 Under a `project` anchor where the user opted out of Jira, an empty `jira:` is the normal resting state for every phase — never nag to ticket it. If the user later opts in, run the create/link ask then.
 
-**Idempotency:** only act on phases whose `jira:` is empty/absent **or** `pending`; never re-touch a phase that already carries a real key. The roadmap **is** the phase↔ticket mapping — there is no separate mapping file in native mode.
+**Idempotency:** only act on phases whose mapping is empty/absent **or** `pending`; never re-touch a phase that already carries a real key. **Native mode:** the roadmap *is* the mapping (the phase's `jira:` field) — no separate file. **GSD mode:** the mapping is the separate `.trackbed/<key>/phase-jira.md` file, kept in sync with `ROADMAP.md` on every insert/delete/ticket.
 
 ## Handoffs
 
@@ -113,4 +117,4 @@ Under a `project` anchor where the user opted out of Jira, an empty `jira:` is t
 
 ## Lifecycle reminder
 
-`.trackbed/` is scaffolding, not a deliverable. It is noise to a code reviewer and must be stripped (gitignore or strip at PR time) when the final PR is cut — same treatment as GSD's `.planning/`. Durable, team-facing outputs that survive the PR: the code, the PRD, the ADRs, and the Jira tickets.
+`.trackbed/` (and `.planning/`) is scaffolding, not a deliverable — noise to a code reviewer. **Keep it git-tracked through development; never gitignore it** (an untracked dir is liable to be deleted as noise). It is removed **manually at the very end**, just before the final PR — a one-off delete, not an automated step Trackbed performs. Durable, team-facing outputs that survive the PR: the code, the PRD, the ADRs, and the Jira tickets.

@@ -39,7 +39,7 @@ roadmap_path: .planning/ROADMAP.md  # set in step 3 — see step 3 for per-mode 
 created: 2026-06-13
 ```
 
-Write `anchor`, `key`, and `created` now; fill the other fields as their steps complete. (The legacy field name `epic:` is equivalent to `key:` for an epic anchor — prefer `key:` going forward.)
+Write `anchor`, `key`, and `created` now; fill the other fields as their steps complete.
 
 ## Step 0 — Determine the shape
 
@@ -104,7 +104,7 @@ Build the **ordered phases**, branching on the `shape` from Step 0. Either way, 
 
 1. **Ask the format switch now:** "Store this roadmap in GSD mode (`.planning/`) or native Trackbed mode (`.trackbed/<key>/`)?" Record the answer in the manifest `format` field. **This is locked for the life of the roadmap.** (For a project anchor, native mode is usually the natural choice — no Jira board required.)
 2. Write the roadmap in the chosen format and set `roadmap_path` in the manifest accordingly:
-   - **GSD mode** → write/update GSD's `.planning/ROADMAP.md`; `roadmap_path: .planning/ROADMAP.md`.
+   - **GSD mode** → write/update GSD's `.planning/ROADMAP.md`; `roadmap_path: .planning/ROADMAP.md`. Do **not** alter GSD's roadmap format. Then create/update `.planning/STATE.md` from GSD's own state template (Current Position → first phase, Session Continuity initialized) — STATE.md is GSD's state layer; let GSD's tooling keep owning its shape.
    - **Native mode** → write `.trackbed/<key>/roadmap.yml`; `roadmap_path: .trackbed/<key>/roadmap.yml`. Use the native phase shape:
 
 ```yaml
@@ -116,12 +116,30 @@ phases:
     depends: []
     done: "code + gates"
     jira:                  # left empty here — ticketed in step 4 (optional under a project anchor)
-    status: todo
+    status: todo           # persisted status ∈ todo | current | blocked | done ("next" is computed, never stored)
+    inserted: false        # true for a runtime decimal insertion (mirrors GSD's "(INSERTED)" marker)
     owes: []
     notes: |
 ```
 
-The roadmap is internal scaffolding (`.trackbed/` and `.planning/` are stripped before the final PR), so phase ids, dependencies, and Trackbed vocabulary are fine here — they just never reach Jira.
+   Then create `.trackbed/<key>/state.yml` — the cross-phase digest (mirrors GSD's STATE.md fields), re-read first on every orchestration turn:
+
+```yaml
+anchor: epic
+key: PANV-60446
+current:
+  phase: "11.1"            # fast pointer; the authoritative status still lives on the phase
+  status: ready-to-plan    # ready-to-plan | planning | in-progress | phase-complete
+  last_activity: "2026-06-13 — roadmap created"
+blockers: []               # cross-phase concerns, prefixed with originating phase id
+session:
+  stopped_at: "roadmap created, nothing executed yet"
+  resume_hint: "hand off phase 11.1"
+```
+
+**Phase ordering (native mode):** order and walk phases by **dotted-segment id comparison**, like version numbers — compare segment by segment as integers, not by numeric value (so `3 → 3.1 → 3.2 → 3.2.1 → 3.3 → 4`, arbitrary depth). `depends` gates *eligibility*; the dotted-id order sets the *walk*. GSD mode inherits GSD's own numeric ordering — don't impose this on it.
+
+The roadmap, `state.yml`, and `phase-jira.md` are internal scaffolding (`.trackbed/` and `.planning/` are deleted manually at the very end, just before the final PR — never gitignored), so phase ids, dependencies, and Trackbed vocabulary are fine here — they just never reach Jira.
 
 ## Step 4 — Tickets: create or link, always ask
 
@@ -142,14 +160,16 @@ For an empty phase:
 - If **link** → record the existing key the user gives you.
 - If **create** → optionally set `jira: pending` to mark intent, then write the ticket via the Atlassian MCP only after the user confirms the ticket text, then overwrite `pending` with the real key. The ticket body must be **framework-neutral** (firewall): describe the work in domain terms, no phase ids, no roadmap/Trackbed/GSD words, no `.trackbed/`/`.planning/` paths.
 
-Write every resulting key **back into the roadmap** (`jira:` in native mode, or the GSD equivalent). The roadmap *is* the phase↔ticket mapping in native mode — there is no separate mapping file.
+Write every resulting key back into the phase↔ticket mapping, **per mode**:
+- **Native mode** → the phase's own `jira:` field in `roadmap.yml`. The roadmap *is* the mapping — no separate file.
+- **GSD mode** → a separate Trackbed-owned file `.trackbed/<key>/phase-jira.md` (a simple `phase-id → JIRA-KEY` table). **Never modify GSD's `ROADMAP.md` to hold the key.** This file is internal scaffolding (deleted at the end with the rest of `.trackbed/`).
 
 **Idempotency:** only act on phases whose `jira:` is empty/absent **or** `pending`; never re-touch a phase that already carries a real key. Re-running this step is therefore safe.
 
 ## Done criteria
 
 Stop when **all** of these hold:
-- the roadmap exists in the locked format,
+- the roadmap exists in the locked format, and the state file exists alongside it (`.planning/STATE.md` in gsd mode, `.trackbed/<key>/state.yml` in native mode),
 - tickets are reconciled per anchor: **epic anchor** → every phase ticketed (linked or created, real keys written back); **project anchor** → either every phase ticketed (if the user opted into Jira) or all phases intentionally local,
 - the manifest is written with `anchor`, `key`, `shape`, `format`, `adr_mode`, `roadmap_path`, and (when applicable) `prd_path` and `adr_path` (omitted when not produced / `adr_mode: skip`).
 
