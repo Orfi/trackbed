@@ -150,6 +150,10 @@ The skills are shared across runtimes; only the command file differs in format. 
 
 On an OpenCode-only machine, Claude Code need not be installed — `~/.claude/skills/` is just a path OpenCode also reads; the installer uses the OpenCode-native path instead. Copilot is independent of both: it has its own home (`~/.copilot/skills/`) and never shares or collides with the Claude/OpenCode skill paths.
 
+## Versioning
+
+Trackbed follows [Semantic Versioning](https://semver.org). Releases are git tags (`v0.1.0`, …) with notes in [`CHANGELOG.md`](CHANGELOG.md). To update an install, `git pull` and re-run `./install.sh`.
+
 ## Status
 
 Spec and skills authored. See [`trackbed-spec.md`](trackbed-spec.md) for the full specification and [`Trackbed-idea.html`](Trackbed-idea.html) for the original "rails without the train" concept brief.
