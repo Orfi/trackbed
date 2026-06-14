@@ -99,13 +99,18 @@ Phases are walked in **dotted-segment id order** (like version numbers): `3 → 
 
 ## Installation
 
-Run the installer and pick your runtime(s) — Claude Code, OpenCode, GitHub Copilot CLI, or any combination:
+Run the installer and pick your runtime(s) — Claude Code, OpenCode, GitHub Copilot CLI, or any combination. There are two equivalent installers; use whichever fits your shell:
 
 ```bash
 git clone https://github.com/Orfi/trackbed.git
 cd trackbed
-./install.sh
+
+./install.sh          # macOS / Linux / Git Bash / WSL
+# or
+pwsh ./install.ps1    # Windows PowerShell, or pwsh on any OS
 ```
+
+Both do exactly the same thing (same prompts, same flags, same install layout). The PowerShell flags are `-Link`, `-Uninstall`, `-Help`.
 
 The installer asks which runtime(s) to install for. Pick one or more — type a single number, or several separated by a space or comma:
 
@@ -145,7 +150,8 @@ opencode/                     # OpenCode surface (command only — skills shared
 copilot/                      # GitHub Copilot CLI surface (own skill copy, executor text adapted)
 └── skills/ (trackbed, trackbed-init, trackbed-orchestrate, trackbed-adr, trackbed-view)
 viz/roadmap.html              # the roadmap viewer template (sample data, opens standalone)
-install.sh
+install.sh                    # installer — macOS / Linux / Git Bash / WSL
+install.ps1                   # installer — Windows PowerShell / pwsh (identical behavior)
 ```
 
 Claude Code and OpenCode share one skill source (`claude/skills/`) — only the command file format differs. Copilot CLI keeps its **own** copy (`copilot/skills/`) because its executor differs and, in Copilot, a skill *is* its slash command — so there is no command file.
