@@ -64,6 +64,8 @@ When a phase comes back, update the roadmap **and the state file**:
 
 Notes are the durable memory of the roadmap — write them even when a phase succeeds cleanly.
 
+**Update trigger — not only at phase hand-off/return.** Trackbed has no engine; these files stay current only because the agent edits them by hand. Perform this Step-4 update on **any material change**, unprompted — a commit landing, a gate/test result, a status flip, a scope change, a blocker appearing or clearing — not merely when a phase is dispatched or comes back. The user should never have to ask you to "update the plan"; keeping `STATE.md` / `ROADMAP.md` / the phase↔ticket map / the viewer in sync at every transition is intrinsic to orchestration, not a separate chore. Keep each update lean (a digest, not an archive) and state each fact in one place.
+
 ## Step 5 — Runtime mutation (the roadmap is a living document)
 
 New phases emerge mid-roadmap — a gap, a regression, a follow-up. When that happens:
