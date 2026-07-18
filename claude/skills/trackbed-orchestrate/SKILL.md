@@ -55,9 +55,23 @@ Re-read the roadmap, then:
 2. Dispatch the phase to the **executor** — Superpowers (`superpowers:executing-plans` / `superpowers:subagent-driven-development`) or vanilla Claude Code — passing the phase `scope` and `done` criteria.
 3. **You do not implement.** You are planning + orchestration only. Trackbed is deliberately resilient about *how* a phase gets built; it only tracks the result.
 
+## Step 3b — Gate check before marking done
+
+Before marking a phase `done` and advancing to the next, the outgoing phase must pass the `trackbed-dod` gate:
+
+1. **Read the phase's `gate:` stamp** — native mode: the `gate:` field in `roadmap.yml`; GSD mode: the `gate` column in `.trackbed/<key>/phase-jira.md`.
+2. **Classify the stamp:**
+   - `gate: green (…)` or `gate: waived (…)` → advance.
+   - Missing, empty, or `gate: red (…)` → **invoke `trackbed-dod`** on the outgoing phase now. Do not advance until it finishes.
+3. **After `trackbed-dod` runs:**
+   - Green or waived → advance (proceed to Step 4).
+   - Red → **refuse the transition**. Surface the blockers from the stamp and note to the user. The phase stays `current`; the executor must resolve the blockers, then `trackbed-dod` must be re-run before you may advance.
+
+**Grandfathering (D7).** Phases already marked `done` that carry no `gate:` stamp predate this skill — treat them as passed. Do not retro-gate, do not re-open them, and do not refuse to run on an old roadmap that has no stamps.
+
 ## Step 4 — Record progress + per-phase notes
 
-When a phase comes back, update the roadmap **and the state file**:
+When a phase comes back (green or waived gate), update the roadmap **and the state file**:
 
 1. **Status** — `done`, or back to `blocked`/`current` with reason. Clear or update `owes`.
 2. **Notes** — narrative per-phase memory: what worked, what didn't, what was **postponed** or **moved to another phase** (name the phase id), implementation notes, and forward notes about future phases.
