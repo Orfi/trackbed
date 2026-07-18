@@ -1,2 +1,5 @@
 # Session scaffolding — local resume state, never committed.
 helper_files/
+
+# orfi-kit per-repo helper-files-root pointer (local only, not shipped)
+.orfi-kits/
