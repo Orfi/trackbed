@@ -4,6 +4,31 @@ All notable changes to Trackbed are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+Spec amendment (2026-07-18): DoD phase-transition gate and the hooks policy.
+
+### Changed
+- **Skills-only principle amended to skills-first** (`trackbed-spec.md` §1,
+  §3 principle 4): the core stays skills-first (markdown/YAML by convention,
+  roadmap as single source of truth, no required scripts or Python
+  dependencies), but hooks are now permitted as an **optional freshness layer
+  only** (e.g. regenerating `roadmap.html` on planning-file writes). Hooks
+  never enforce anything; Trackbed remains fully usable with no hooks
+  installed.
+
+### Added
+- **Phase-transition gate principle** (`trackbed-spec.md` §3 principle 6):
+  the `trackbed-dod` skill gates every phase transition — the outgoing phase
+  must carry a green or waived `gate:` stamp before `trackbed-orchestrate`
+  may advance; red or missing → refused; human waivers are recorded as
+  `gate: waived (date, reason)`. No retro-gating of already-closed phases.
+- **`gate:` field** in the native roadmap phase shape (§4.3) and a `gate`
+  column in GSD mode's `phase-jira.md` table (§4.2 — GSD's `ROADMAP.md` is
+  never modified).
+- **`trackbed-dod` row** in the skill table (§5): internal; verifies the
+  outgoing phase's DoD checklist with evidence and writes the gate stamp.
+
 ## [0.1.0] — 2026-06-14
 
 First tagged release. Spec and skills authored; multi-runtime install in place.

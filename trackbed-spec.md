@@ -8,7 +8,7 @@
 
 ## 1. What Trackbed is
 
-Trackbed is a thin **roadmap + status + orchestration** layer for working through a body of work — a Jira **epic** or a standalone **project** — implemented entirely as Claude Code / OpenCode **skills and one slash command** — no scripts, no Python, no hooks.
+Trackbed is a thin **roadmap + status + orchestration** layer for working through a body of work — a Jira **epic** or a standalone **project** — implemented entirely as Claude Code / OpenCode **skills and one slash command** — no required scripts, no Python dependencies; hooks exist only as an optional freshness layer (see §3, principle 4).
 
 It keeps the one valuable thing from GSD — the **route and manifest** (ordered phases, dependencies, "what's owed", per-phase memory) — and lets a lightweight executor (Superpowers or vanilla Claude Code) drive each phase. "Keep the rails, lose the train."
 
@@ -36,8 +36,9 @@ Every roadmap hangs off an **anchor** (recorded in the manifest as `anchor`):
 1. **No mid-roadmap format switching.** The storage format (GSD vs native Trackbed) is chosen once per roadmap and locked for its life.
 2. **Firewall — team-facing outputs stay framework-neutral.** Jira tickets, the PRD, and ADR files must contain **no** GSD/Trackbed vocabulary and **no** `.planning/` or `.trackbed/` paths. They use plain domain language only. Internal phase↔ticket mapping never leaks into Jira.
 3. **Always ask before writing to Jira.** Never auto-create or auto-link a ticket silently. Under a `project` anchor, Jira may be unused entirely.
-4. **Skills-only.** No executable scripts, no Python dependencies, no hooks. The agent reads/writes markdown/YAML by convention. The roadmap file is the single source of truth and must be re-read (never trusted from stale memory) — this is how the "rails the car can't jump" guarantee is upheld without code.
+4. **Skills-first.** *(Consciously amended 2026-07-18 — supersedes the original skills-only principle.)* The core stays skills-first: the agent reads/writes markdown/YAML by convention; no required executable scripts, no Python dependencies. The roadmap file is the single source of truth and must be re-read (never trusted from stale memory) — this is how the "rails the car can't jump" guarantee is upheld without code. Hooks are permitted as an **optional freshness layer only** (e.g. regenerating `roadmap.html` on planning-file writes); hooks never enforce anything, and Trackbed must remain fully usable with no hooks installed.
 5. **One front door for planning.** Only `trackbed` is the planning/orchestration entry point; `trackbed-init` and `trackbed-orchestrate` are hidden (`user-invocable: false`) and reached only through it. `trackbed-adr` is the exception — it is user-invocable and also runs standalone (a story flow, or an epic/project that needs only ADRs), in addition to being delegated to by `trackbed-init`.
+6. **Phase transitions are gated.** The `trackbed-dod` skill gates every phase transition: the outgoing phase must carry a green or waived `gate:` stamp before `trackbed-orchestrate` may advance; a red or missing stamp means the transition is refused. A human may override a red gate — recorded as `gate: waived (date, reason)`, visible and auditable, never silent. The gate applies only to transitions after the skill lands; already-closed phases are never retro-gated. The stamp is one compact line, overwritten each run — current truth only; evidence and history live in the per-phase note.
 
 ## 4. Storage model
 
@@ -61,7 +62,7 @@ created: 2026-06-13
 
 ### 4.2 Roadmap content location (depends on format)
 
-- **GSD mode:** roadmap / status / notes live in GSD's `.planning/` files — `ROADMAP.md` plus **`STATE.md`** (GSD's own cross-phase digest, owned by GSD's tooling). Trackbed reads, updates, and backfills them but **never alters GSD's `ROADMAP.md` format**. The one thing `.planning/` has no slot for — the phase↔ticket mapping — lives in a separate Trackbed-owned file `.trackbed/<key>/phase-jira.md` (a `phase-id → JIRA-KEY` table), kept in sync with `ROADMAP.md`.
+- **GSD mode:** roadmap / status / notes live in GSD's `.planning/` files — `ROADMAP.md` plus **`STATE.md`** (GSD's own cross-phase digest, owned by GSD's tooling). Trackbed reads, updates, and backfills them but **never alters GSD's `ROADMAP.md` format**. The one thing `.planning/` has no slot for — the phase↔ticket mapping — lives in a separate Trackbed-owned file `.trackbed/<key>/phase-jira.md` (a `phase-id → JIRA-KEY` table), kept in sync with `ROADMAP.md`. That table also carries a `gate` column holding each phase's DoD stamp (GSD's `ROADMAP.md` is never modified).
 - **Native mode:** roadmap / status / notes live alongside the manifest in `.trackbed/<key>/`:
   - `roadmap.yml` — ordered phases (see §4.3); the phase's `jira:` field *is* the phase↔ticket mapping (no separate file)
   - `state.yml` — cross-phase digest mirroring STATE.md's fields: `current` (phase + status), `blockers`, `session` (stopped-at / resume-hint). Re-read first every turn.
@@ -83,6 +84,7 @@ phases:
     done: "code + gates"          # explicit done-criteria
     jira: DEMO-102              # link state — see below
     status: done | current | blocked | todo   # persisted only — "next" is computed each turn, never stored
+    gate: "green (2026-07-18, 9/9 checks, tests 47/47)"   # DoD stamp from trackbed-dod — one line, overwritten each run; green | red | waived (date, reason)
     inserted: false               # true for a runtime decimal insertion (mirrors GSD's "(INSERTED)")
     owes: []                      # gates not yet run, if any
     notes: |                      # per-phase memory (what worked, what didn't, postponed, moved, impl notes)
@@ -112,6 +114,7 @@ Idempotency comes from: only act on phases whose mapping is empty/absent or `pen
 | `trackbed-init` | internal | One-time planning: PRD → ADR → roadmap → tickets + set format switch. Skippable. |
 | `trackbed-orchestrate` | internal | Living roadmap+status+notes; compute next phase; hand off; record; runtime mutation. |
 | `trackbed-adr` | internal + shared + standalone | Read existing ADRs, gap-fill new ones. Used by init, by stories, or standalone on an epic/project that needs only ADRs (no roadmap). |
+| `trackbed-dod` | internal | Phase-transition gate: verifies the outgoing phase's DoD checklist with evidence, writes the gate stamp. |
 
 ### 5.1 `trackbed` (front door)
 
@@ -170,4 +173,4 @@ Honors the `adr_mode` passed by the caller: **`read`** (default) = steps 1–2 o
   - **Claude Code** — skills at `~/.claude/skills/`, command at `~/.claude/commands/trackbed.md`.
   - **OpenCode** — reads `~/.claude/skills/` natively (or its own `~/.config/opencode/skills/`); command copied to `~/.config/opencode/commands/trackbed.md`.
   - **GitHub Copilot CLI** — skills at `~/.copilot/skills/`; no command file (a skill is its own slash command). Uses its own skill copy because the executor reference differs.
-- In this repo each runtime has its own surface: `claude/` (skills + command), `opencode/` (command only — skills shared with `claude/`), and `copilot/` (its own adapted skill copy). The spec lives at `trackbed/trackbed-spec.md`. Installation into the runtimes is handled by `install.sh` (interactive runtime selection), which is install-time plumbing only and does not violate the skills-only rule.
+- In this repo each runtime has its own surface: `claude/` (skills + command), `opencode/` (command only — skills shared with `claude/`), and `copilot/` (its own adapted skill copy). The spec lives at `trackbed/trackbed-spec.md`. Installation into the runtimes is handled by `install.sh` (interactive runtime selection), which is install-time plumbing only and does not violate the skills-first rule.
