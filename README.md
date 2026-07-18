@@ -4,7 +4,7 @@
 
 **Keep the rails, lose the train.**
 
-Trackbed is a thin **roadmap + status + orchestration** layer for working through a body of work — a Jira **epic** or a standalone **project**. It is implemented entirely as **skills** (plus a thin slash command on the runtimes that need one) for Claude Code, OpenCode, and GitHub Copilot CLI: no scripts, no Python, no hooks.
+Trackbed is a thin **roadmap + status + orchestration** layer for working through a body of work — a Jira **epic** or a standalone **project**. It is implemented entirely as **skills** (plus a thin slash command on the runtimes that need one) for Claude Code, OpenCode, and GitHub Copilot CLI: no required scripts, no Python dependencies; hooks exist only as an optional freshness layer.
 
 It keeps the one genuinely valuable thing from heavier planning frameworks — the **route and manifest** (ordered phases, dependencies, "what's owed", per-phase memory) — and lets a lightweight executor (Superpowers, vanilla Claude Code, OpenCode, or a Copilot agent) drive each phase. Trackbed owns *where you are and what's next*; it never implements a phase itself.
 
@@ -47,6 +47,7 @@ One planning front door, two hidden internal skills, and a shared ADR specialist
 | `trackbed-orchestrate` | hidden (`user-invocable: false`) | Living roadmap + status + notes; compute next phase; hand off; record; absorb runtime mutations. |
 | `trackbed-adr` | **user-invocable** (shared) | Read existing ADRs, gap-fill new ones. Used by init, or run standalone on a story/epic/project that needs only ADRs — no roadmap required. |
 | `trackbed-view` | **user-invocable** | Open the roadmap viewer in the browser — regenerates a self-contained HTML page (phase board + rail + dependency graph) from the live roadmap, then opens it. Read-only. |
+| `trackbed-dod` | hidden (`user-invocable: false`) | Phase-transition gate: verifies the outgoing phase's DoD checklist with evidence and writes the gate stamp. |
 
 ## Usage
 
@@ -88,7 +89,7 @@ Phases are walked in **dotted-segment id order** (like version numbers): `3 → 
 1. **No mid-roadmap format switching.** GSD vs native is chosen once and locked.
 2. **Firewall.** Team-facing outputs (Jira tickets, PRD, ADRs) stay framework-neutral — plain domain language, no GSD/Trackbed vocabulary, no `.planning/` or `.trackbed/` paths. The phase↔ticket mapping never leaks into Jira.
 3. **Always ask before writing to Jira.** Never auto-create or auto-link a ticket. Under a `project` anchor, Jira may be unused entirely.
-4. **Skills-only.** No scripts, no Python, no hooks. The roadmap file is the single source of truth and is always re-read, never trusted from stale memory.
+4. **Skills-first.** No required scripts, no Python dependencies. Hooks are permitted as an optional freshness layer only — never enforcing anything; Trackbed is fully usable with no hooks installed. The roadmap file is the single source of truth and is always re-read, never trusted from stale memory.
 5. **One front door for planning.** `trackbed` is the planning entry point; `trackbed-init` and `trackbed-orchestrate` are hidden (`user-invocable: false`) and reached only through it. `trackbed-adr` is the exception — user-invocable and runnable standalone.
 
 ## Lifecycle
@@ -144,11 +145,12 @@ claude/                       # Claude Code surface
     ├── trackbed-init/SKILL.md
     ├── trackbed-orchestrate/SKILL.md
     ├── trackbed-adr/SKILL.md
+    ├── trackbed-dod/SKILL.md
     └── trackbed-view/        # SKILL.md + roadmap-template.html (the viewer)
 opencode/                     # OpenCode surface (command only — skills shared with claude/)
-└── commands/trackbed.md
+└── commands/trackbed.md      # shares claude/skills/ — trackbed-dod included automatically
 copilot/                      # GitHub Copilot CLI surface (own skill copy, executor text adapted)
-└── skills/ (trackbed, trackbed-init, trackbed-orchestrate, trackbed-adr, trackbed-view)
+└── skills/ (trackbed, trackbed-init, trackbed-orchestrate, trackbed-adr, trackbed-dod, trackbed-view)
 viz/roadmap.html              # the roadmap viewer template (sample data, opens standalone)
 install.sh                    # installer — macOS / Linux / Git Bash / WSL
 install.ps1                   # installer — Windows PowerShell / pwsh (identical behavior)
