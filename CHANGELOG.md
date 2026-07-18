@@ -28,6 +28,20 @@ Spec amendment (2026-07-18): DoD phase-transition gate and the hooks policy.
   never modified).
 - **`trackbed-dod` row** in the skill table (§5): internal; verifies the
   outgoing phase's DoD checklist with evidence and writes the gate stamp.
+- **`trackbed-dod` skill** — ships in the claude variant
+  (`claude/skills/trackbed-dod/SKILL.md`) and the copilot variant
+  (`copilot/skills/trackbed-dod/SKILL.md`); nine evidence-based checks,
+  conditional checks 8–9, pass-through check 10, waiver support, and
+  D7 grandfathering. `trackbed-orchestrate` (both variants) enforces the gate
+  at transition via the new Step 3b. OpenCode shares the claude variant
+  automatically (no separate copy needed).
+- **Viewer gate rendering** — the roadmap viewer (`roadmap-template.html`,
+  both claude and copilot copies) now renders a per-phase gate badge (green ✓ /
+  red ✗ / waived ~ / ungated) in the phase board and shows the full gate stamp
+  in the hover tooltip. The `gate:` field is documented in `trackbed-view`'s
+  `SKILL.md` DATA contract.
+- **Both installers** (`install.sh`, `install.ps1`) now include `trackbed-dod`
+  in the skill roster — deployed for Claude Code, OpenCode, and Copilot CLI.
 
 ## [0.1.0] — 2026-06-14
 
