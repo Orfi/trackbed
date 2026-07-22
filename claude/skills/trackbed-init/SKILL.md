@@ -152,7 +152,7 @@ For each phase in the roadmap, inspect its **Jira link state** (identical three-
 
 | `jira:` value | Meaning | Action |
 |---|---|---|
-| `PANV-...` (a real key) | Linked — ticket exists on the board | Already done — skip it |
+| `DEMO-...` (a real key) | Linked — ticket exists on the board | Already done — skip it |
 | absent / empty | **Not yet ticketed** | **Ask:** "create a new ticket or link an existing one?" |
 | `pending` | Decided to create, write not yet completed | Finish the create, then overwrite with the real key |
 
