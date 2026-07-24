@@ -46,6 +46,7 @@ One planning front door, two hidden internal skills, and a shared ADR specialist
 | `trackbed-init` | hidden (`user-invocable: false`) | One-time planning: PRD → ADR → roadmap → tickets, and lock the storage format. Skippable. |
 | `trackbed-orchestrate` | hidden (`user-invocable: false`) | Living roadmap + status + notes; compute next phase; hand off; record; absorb runtime mutations. |
 | `trackbed-plan` | **user-invocable** | Persist a phase's plan so it never executes planless. No phase → the current phase. Simple mode drafts from the roadmap's scope/done; naming a tool in the prompt ("using superpowers") runs that tool's planning flow and adopts its output. |
+| `trackbed-sync` | **user-invocable** | Reconcile the planning layer to the live roadmap — state file, roadmap, phase↔ticket mapping, viewer — and flag any phase missing a plan. Read-reconcile only. Invoked by orchestrate on any change; callable directly between turns. |
 | `trackbed-adr` | **user-invocable** (shared) | Read existing ADRs, gap-fill new ones. Used by init, or run standalone on a story/epic/project that needs only ADRs — no roadmap required. |
 | `trackbed-view` | **user-invocable** | Open the roadmap viewer in the browser — regenerates a self-contained HTML page (phase board + rail + dependency graph) from the live roadmap, then opens it. Read-only. |
 | `trackbed-dod` | hidden (`user-invocable: false`) | Phase-transition gate: verifies the outgoing phase's DoD checklist with evidence and writes the gate stamp. |
@@ -146,13 +147,14 @@ claude/                       # Claude Code surface
     ├── trackbed-init/SKILL.md
     ├── trackbed-orchestrate/SKILL.md
     ├── trackbed-plan/SKILL.md
+    ├── trackbed-sync/SKILL.md
     ├── trackbed-adr/SKILL.md
     ├── trackbed-dod/SKILL.md
     └── trackbed-view/        # SKILL.md + roadmap-template.html (the viewer)
 opencode/                     # OpenCode surface (command only — skills shared with claude/)
 └── commands/trackbed.md      # shares claude/skills/ — trackbed-dod included automatically
 copilot/                      # GitHub Copilot CLI surface (own skill copy, executor text adapted)
-└── skills/ (trackbed, trackbed-init, trackbed-orchestrate, trackbed-plan, trackbed-adr, trackbed-dod, trackbed-view)
+└── skills/ (trackbed, trackbed-init, trackbed-orchestrate, trackbed-plan, trackbed-sync, trackbed-adr, trackbed-dod, trackbed-view)
 viz/roadmap.html              # the roadmap viewer template (sample data, opens standalone)
 install.sh                    # installer — macOS / Linux / Git Bash / WSL
 install.ps1                   # installer — Windows PowerShell / pwsh (identical behavior)
