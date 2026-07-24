@@ -52,8 +52,9 @@ Re-read the roadmap, then:
 ## Step 3 — Hand off the phase
 
 1. Mark the chosen phase `status: current` (in-progress) in the roadmap and persist it.
-2. Dispatch the phase to the **executor** — Copilot CLI itself, or a Copilot custom agent (e.g. via the `task` tool / `--agent`) — passing the phase `scope` and `done` criteria.
-3. **You do not implement.** You are planning + orchestration only. Trackbed is deliberately resilient about *how* a phase gets built; it only tracks the result.
+2. **A persisted plan must exist before handoff.** If the phase has no plan in the tracked planning layer (the location `trackbed-plan` writes to), do **not** dispatch — notify the user: "Phase `<id>` has no plan. Run `/trackbed-plan <id>` first." You never author the plan yourself; you only check for it and point at `trackbed-plan`, which owns all plan writing.
+3. Dispatch the phase to the **executor** — Copilot CLI itself, or a Copilot custom agent (e.g. via the `task` tool / `--agent`) — passing the phase `scope` and `done` criteria.
+4. **You do not implement.** You are planning + orchestration only. Trackbed is deliberately resilient about *how* a phase gets built; it only tracks the result.
 
 ## Step 3b — Gate check before marking done
 
