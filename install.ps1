@@ -51,7 +51,7 @@ $OpencodeSkills = Join-Path $XdgConfig 'opencode/skills'
 $OpencodeCmds  = Join-Path $XdgConfig 'opencode/commands'
 $CopilotSkills = Join-Path $Home_ '.copilot/skills'         # Copilot's own home — no command file
 
-$Skills = @('trackbed','trackbed-init','trackbed-orchestrate','trackbed-adr','trackbed-dod','trackbed-view')
+$Skills = @('trackbed','trackbed-init','trackbed-orchestrate','trackbed-plan','trackbed-adr','trackbed-dod','trackbed-view')
 
 # --- helpers -----------------------------------------------------------------
 
