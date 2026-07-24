@@ -72,16 +72,13 @@ Before marking a phase `done` and advancing to the next, the outgoing phase must
 
 ## Step 4 — Record progress + per-phase notes
 
-When a phase comes back (green or waived gate), update the roadmap **and the state file**:
+When a phase comes back (green or waived gate):
 
-1. **Status** — `done`, or back to `blocked`/`current` with reason. Clear or update `owes`.
-2. **Notes** — narrative per-phase memory: what worked, what didn't, what was **postponed** or **moved to another phase** (name the phase id), implementation notes, and forward notes about future phases.
-3. **State file** — update the cross-phase digest so the next session restores instantly: `STATE.md` in gsd mode, `state.yml` in native mode. Refresh `current` (phase + status), append/clear `blockers`, and update `session` (`stopped_at`, `resume_hint`). Keep it a short digest, not an archive.
-4. **Visualization** — regenerate the roadmap viewer so it always matches the live roadmap (see "Visualization" below).
+1. **Status** — set the phase `done`, or back to `blocked`/`current` with reason. Clear or update `owes`.
+2. **Notes** — narrative per-phase memory: what worked, what didn't, what was **postponed** or **moved to another phase** (name the phase id), implementation notes, and forward notes about future phases. Notes are the durable memory of the roadmap — write them even when a phase succeeds cleanly.
+3. **Reconcile everything else — invoke `trackbed-sync`.** The state file, roadmap, phase↔ticket mapping, and viewer are all brought back in step by `trackbed-sync` (its logic lives there, defined once; do not duplicate it here). It also flags any phase missing a plan. Call it after the status/notes update above.
 
-Notes are the durable memory of the roadmap — write them even when a phase succeeds cleanly.
-
-**Update trigger — not only at phase hand-off/return.** Trackbed has no engine; these files stay current only because the agent edits them by hand. Perform this Step-4 update on **any material change**, unprompted — a commit landing, a gate/test result, a status flip, a scope change, a blocker appearing or clearing — not merely when a phase is dispatched or comes back. The user should never have to ask you to "update the plan"; keeping `STATE.md` / `ROADMAP.md` / the phase↔ticket map / the viewer in sync at every transition is intrinsic to orchestration, not a separate chore. Keep each update lean (a digest, not an archive) and state each fact in one place.
+**Update trigger — not only at phase hand-off/return.** Trackbed has no engine; these files stay current only because the agent keeps them so. Invoke `trackbed-sync` on **any material change**, unprompted — a commit landing, a gate/test result, a status flip, a scope change, a blocker appearing or clearing — not merely when a phase is dispatched or comes back. The user should never have to ask you to "update the plan"; keeping the planning layer in sync at every transition is intrinsic to orchestration, not a separate chore.
 
 ## Step 5 — Runtime mutation (the roadmap is a living document)
 
