@@ -11,7 +11,7 @@ Show the roadmap as a picture. You regenerate a single self-contained HTML viewe
 ## Hard rules
 
 - **Read-only.** Never edit the roadmap, state, notes, or Jira from here. This skill only *projects* the roadmap.
-- **Skills-only.** No build step, no server. You write one HTML file by convention and open it with the OS opener.
+- **Skills-first.** No build step, no server, no required scripts. You write one HTML file by convention and open it with the OS opener.
 - **The viewer is a projection, never a second source of truth.** It is always rebuilt from the roadmap; if they ever disagree, the roadmap wins — regenerate.
 
 ## Step 1 — Locate the roadmap
