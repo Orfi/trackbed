@@ -12,7 +12,7 @@ Bring every Trackbed planning artifact back in step with the live roadmap in one
 
 - **Read-reconcile only.** Refresh the planning files to match the roadmap. Never advance a phase, never author a plan, never create or link Jira. Those belong to `trackbed-orchestrate`, `trackbed-plan`, and the Jira ask respectively.
 - **The roadmap is the single source of truth.** Re-read it from disk first; if any artifact disagrees, the roadmap wins — the artifact is rewritten to match, never the reverse.
-- **Skills-only.** Read/write markdown and YAML by convention; no scripts.
+- **Skills-first.** Read/write markdown and YAML by convention; no required scripts.
 - **Format-aware.** gsd mode → `.planning/STATE.md` + `.planning/ROADMAP.md` + `.trackbed/<key>/phase-jira.md`; native mode → `.trackbed/<key>/state.yml` + `roadmap.yml`.
 
 ## Step 1 — Read the manifest and roadmap

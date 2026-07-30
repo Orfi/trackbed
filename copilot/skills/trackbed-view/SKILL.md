@@ -11,7 +11,7 @@ Show the roadmap as a picture. You regenerate a single self-contained HTML viewe
 ## Hard rules
 
 - **Read-only.** Never edit the roadmap, state, notes, or Jira from here. This skill only *projects* the roadmap.
-- **Skills-only.** No build step, no server. You write one HTML file by convention and open it with the OS opener.
+- **Skills-first.** No build step, no server, no required scripts. You write one HTML file by convention and open it with the OS opener.
 - **The viewer is a projection, never a second source of truth.** It is always rebuilt from the roadmap; if they ever disagree, the roadmap wins — regenerate.
 
 ## Step 1 — Locate the roadmap
@@ -31,7 +31,7 @@ const DATA = {
   key: "<key>",
   jiraBase: "",              // e.g. "https://acme.atlassian.net/browse" → clickable nodes/rows
   phases: [
-    { id:"1", scope:"…", depends:[], done:"…", jira:"DEMO-101", status:"done|current|blocked|todo", owes:[], inserted:false },
+    { id:"1", scope:"…", depends:[], done:"…", jira:"DEMO-101", status:"done|current|blocked|todo", owes:[], inserted:false, gate:"green (…)" },
     // one entry per phase, in roadmap order
   ]
 };
@@ -40,6 +40,7 @@ const DATA = {
 - One entry per phase. Copy `id`, `scope`, `depends`, `done`, `owes` straight across.
 - `jira`: the phase's key (native mode) or the mapping in `phase-jira.md` (gsd mode). Omit under a project anchor with no Jira.
 - `status`: persist only `done | current | blocked | todo`. **Never write `next`** — the viewer computes "next" itself (first unblocked phase in dotted-segment id order).
+- `gate`: optional — the DoD stamp written by `trackbed-dod`: `"green (…)"`, `"red (…)"`, or `"waived (…)"`. Omit or leave empty for ungated phases (grandfathered or not yet gated). The viewer renders a small colored badge per phase.
 - `inserted: true` for decimal insertions.
 
 Write the file, overwriting any previous copy. This keeps the picture exactly matching the roadmap every time it's opened.

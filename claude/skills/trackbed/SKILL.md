@@ -23,7 +23,7 @@ The anchor key is what names the working directory: `.trackbed/<key>/` (where `<
 
 ## Hard rules (inherited from the Trackbed spec — never violate)
 
-- **Skills-only.** No scripts, no Python, no hooks. You do everything by reading and writing Markdown/YAML by convention, and by invoking sibling skills.
+- **Skills-first.** No required scripts, no Python dependencies. You do everything by reading and writing Markdown/YAML by convention, and by invoking sibling skills. Hooks, if present, are an optional freshness layer only — never required.
 - **Always ask before any Jira write.** You do not write to Jira at all in this skill, but downstream skills must ask first — never auto-create or auto-link a ticket.
 - **A single story has no roadmap.** Trackbed does not apply to a lone Jira story; it goes straight to execution (Superpowers or vanilla). A story may borrow `trackbed-adr` standalone.
 - **You dispatch, you don't do.** No PRD drafting, no roadmap building, no ticketing, no phase hand-off. Hand those to the internal skills.

@@ -10,7 +10,7 @@ Persist the plan for one phase so execution never starts planless. Plans are the
 
 ## Hard rules
 
-- **Skills-only.** Read and write markdown by convention; no scripts, no hooks.
+- **Skills-first.** Read and write markdown by convention; no required scripts. Hooks, if present, are an optional freshness layer only — never required.
 - **Never fabricate scope.** Simple mode uses the roadmap's `scope`/`done`; tool mode uses the tool's output. If neither has enough to plan honestly, ask.
 - **This skill is the ONLY place that authors plans, and the ONLY place that prompts about an existing plan.** Orchestration never writes plans — it only detects absence and tells the user to run this.
 - **Format-aware.** gsd mode → the plan lives under GSD's phases layout (e.g. `.planning/phases/<NN>-<slug>/<NN>-PP-PLAN.md`); native mode → the plans location recorded in the manifest.

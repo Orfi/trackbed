@@ -22,7 +22,7 @@ You are never invoked with `skip` — when ADRs are skipped, `trackbed-init` sim
 - **ADRs are team-facing and durable.** They survive the final PR — they are *not* stripped like `.trackbed/` or `.planning/`. Keep them framework-neutral: plain domain and architecture language, **no** GSD/Trackbed vocabulary, **no** `.planning/` or `.trackbed/` paths, no phase↔ticket mapping.
 - **Never assume an ADR path.** Resolve it from config; if unset, ask.
 - **Reading is the job. Creating is the exception.** Default to writing nothing. Only propose a new ADR for a genuine gap, and never write it without explicit user approval.
-- **Skills-only.** No scripts, no hooks. You scan, read, and write markdown by convention.
+- **Skills-first.** No required scripts. You scan, read, and write markdown by convention. Hooks, if present, are an optional freshness layer only — never required.
 
 ## Step 1 — Resolve the ADR location
 

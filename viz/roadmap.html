@@ -59,6 +59,11 @@
   .pmeta .owe{color:var(--red)}
   .pmeta .dep{color:var(--blue)}
   .jira{font-family:var(--mono);font-size:12px;color:var(--green-dim);white-space:nowrap;text-align:right}
+  .gate-badge{font-family:var(--mono);font-size:10px;letter-spacing:.04em;padding:2px 7px;border-radius:20px;border:1px solid;white-space:nowrap;margin-top:4px;display:inline-block}
+  .gate-badge.g-green{color:var(--green);border-color:var(--green-dim)}
+  .gate-badge.g-red{color:var(--red);border-color:var(--red)}
+  .gate-badge.g-waived{color:var(--amber);border-color:var(--amber)}
+  .gate-badge.g-none{color:var(--ink-dim);border-color:var(--line)}
   .jira .none{color:var(--ink-dim)}
 
   .rail{font-family:var(--mono);font-size:13px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:16px;line-height:2.4;
@@ -137,14 +142,15 @@
 
 /* ================= DATA — replace this block with your roadmap ================= *
  * This is the only part that changes per roadmap. It mirrors the native
- * roadmap.yml shape. `trackbed-orchestrate` can rewrite it on each update.    */
+ * roadmap.yml shape. `trackbed-orchestrate` can rewrite it on each update.
+ * gate: optional — "green (…)" | "red (…)" | "waived (…)" — written by trackbed-dod. */
 const DATA = {
   anchor: "epic",
   key: "DEMO-100",
   jiraBase: "",           // e.g. "https://acme.atlassian.net/browse" → clickable nodes
   phases: [
-    { id:"1",   scope:"Project scaffolding",        depends:[],          done:"builds + CI green", jira:"DEMO-101", status:"done" },
-    { id:"2",   scope:"Data model",                 depends:["1"],       done:"schema + migrations", jira:"DEMO-102", status:"done" },
+    { id:"1",   scope:"Project scaffolding",        depends:[],          done:"builds + CI green", jira:"DEMO-101", status:"done",    gate:"green (2026-07-18, 9/9 checks, tests 47/47)" },
+    { id:"2",   scope:"Data model",                 depends:["1"],       done:"schema + migrations", jira:"DEMO-102", status:"done",    gate:"green (2026-07-18, 7/9 checks, 2 skipped)" },
     { id:"3",   scope:"Core API",                    depends:["2"],       done:"endpoints + tests", jira:"DEMO-103", status:"current", owes:["integration tests"] },
     { id:"3.1", scope:"Auth hardening (inserted)",   depends:["3"],       done:"code + review", jira:"DEMO-110", status:"todo", inserted:true },
     { id:"4",   scope:"Web UI",                       depends:["3"],       done:"screens wired", jira:"DEMO-104", status:"todo" },
@@ -164,8 +170,25 @@ function cmpId(a,b){
   return 0;
 }
 
+function gateClass(g){
+  if(!g) return "g-none";
+  const s=String(g).toLowerCase().trim();
+  if(s.startsWith("green")) return "g-green";
+  if(s.startsWith("red"))   return "g-red";
+  if(s.startsWith("waived"))return "g-waived";
+  return "g-none";
+}
+function gateLabel(g){
+  if(!g) return "ungated";
+  const s=String(g).toLowerCase().trim();
+  if(s.startsWith("green")) return "gate ✓";
+  if(s.startsWith("red"))   return "gate ✗";
+  if(s.startsWith("waived"))return "gate ~";
+  return "ungated";
+}
+
 function decorate(d){
-  d.phases.forEach(p=>{ p.depends=(p.depends||[]).map(String); p.owes=p.owes||[]; p.id=String(p.id); p.status=(p.status||"todo").toLowerCase(); });
+  d.phases.forEach(p=>{ p.depends=(p.depends||[]).map(String); p.owes=p.owes||[]; p.id=String(p.id); p.status=(p.status||"todo").toLowerCase(); p.gate=p.gate||""; });
   const byId=Object.fromEntries(d.phases.map(p=>[p.id,p]));
   const isDone=id=>byId[id]&&byId[id].status==="done";
   const ordered=[...d.phases].sort((a,b)=>cmpId(a.id,b.id));
@@ -194,6 +217,7 @@ function wireTip(el,p){
       `<span class="dim">depends:</span> ${p.depends.length?p.depends.join(", "):"none"}<br>`+
       (p.done?`<span class="dim">done:</span> ${esc(p.done)}<br>`:"")+
       (p.owes.length?`<span class="dim">owes:</span> ${p.owes.join(", ")}<br>`:"")+
+      (p.gate?`<span class="dim">gate:</span> ${esc(p.gate)}<br>`:"")+
       (p.jira?`<span class="dim">jira:</span> ${p.jira}`:"");
   });
   el.addEventListener("mouseleave",()=>tip.style.display="none");
@@ -213,11 +237,12 @@ function renderBoard(ordered){
     const dep=p.depends.length?`<span class="dep">depends ${p.depends.join(", ")}</span>`:"";
     const owe=p.owes.length?`${p.depends.length?" · ":""}<span class="owe">owes ${p.owes.join(", ")}</span>`:"";
     const done=p.done?`${(p.depends.length||p.owes.length)?" · ":""}done: ${esc(p.done)}`:"";
+    const gateBadge=`<span class="gate-badge ${gateClass(p.gate)}">${gateLabel(p.gate)}</span>`;
     row.innerHTML=
       `<div class="pid"><span class="badge ${p._eff}">${LABEL[p._eff]}</span> ${p.id}</div>`+
       `<div><div class="story">${esc(p.scope||"—")}${p.inserted?'<span class="ins">✦ inserted</span>':''}</div>`+
         `<div class="pmeta">${dep}${owe}${done}</div></div>`+
-      `<div class="jira">${p.jira?esc(p.jira):'<span class="none">— local —</span>'}</div>`;
+      `<div class="jira">${p.jira?esc(p.jira):'<span class="none">— local —</span>'}<br>${gateBadge}</div>`;
     wireTip(row,p); wireClick(row,p); board.appendChild(row);
   });
 }
