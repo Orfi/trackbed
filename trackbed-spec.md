@@ -37,8 +37,10 @@ Every roadmap hangs off an **anchor** (recorded in the manifest as `anchor`):
 2. **Firewall — team-facing outputs stay framework-neutral.** Jira tickets, the PRD, and ADR files must contain **no** GSD/Trackbed vocabulary and **no** `.planning/` or `.trackbed/` paths. They use plain domain language only. Internal phase↔ticket mapping never leaks into Jira.
 3. **Always ask before writing to Jira.** Never auto-create or auto-link a ticket silently. Under a `project` anchor, Jira may be unused entirely.
 4. **Skills-first.** *(Consciously amended 2026-07-18 — supersedes the original skills-only principle.)* The core stays skills-first: the agent reads/writes markdown/YAML by convention; no required executable scripts, no Python dependencies. The roadmap file is the single source of truth and must be re-read (never trusted from stale memory) — this is how the "rails the car can't jump" guarantee is upheld without code. Hooks are permitted as an **optional freshness layer only** (e.g. regenerating `roadmap.html` on planning-file writes); hooks never enforce anything, and Trackbed must remain fully usable with no hooks installed.
-5. **One front door for planning.** Only `trackbed` is the planning/orchestration entry point; `trackbed-init` and `trackbed-orchestrate` are hidden (`user-invocable: false`) and reached only through it. `trackbed-adr` is the exception — it is user-invocable and also runs standalone (a story flow, or an epic/project that needs only ADRs), in addition to being delegated to by `trackbed-init`.
+5. **One front door for planning.** Only `trackbed` is the planning/orchestration entry point; `trackbed-init`, `trackbed-orchestrate`, and `trackbed-dod` are hidden (`user-invocable: false`) and reached only through it. The exceptions are the **non-orchestrating** skills, which are user-invocable and runnable standalone between turns because none of them advances the roadmap: `trackbed-adr` (ADR intake, also delegated to by `trackbed-init`), `trackbed-plan` (authors a phase plan), `trackbed-sync` (reconciles the planning layer), and `trackbed-view` (opens the viewer). The rule guards *who may drive the roadmap forward*, not *who may be typed*.
 6. **Phase transitions are gated.** The `trackbed-dod` skill gates every phase transition: the outgoing phase must carry a green or waived `gate:` stamp before `trackbed-orchestrate` may advance; a red or missing stamp means the transition is refused. A human may override a red gate — recorded as `gate: waived (date, reason)`, visible and auditable, never silent. The gate applies only to transitions after the skill lands; already-closed phases are never retro-gated. The stamp is one compact line, overwritten each run — current truth only; evidence and history live in the per-phase note.
+
+   **The gate verifies evidence; it does not re-execute.** *(Amended 2026-07-30.)* Each check is satisfied by fresh evidence recorded in the per-phase note's `## DoD` ledger — a `sha` column pinning every result to the commit it was produced at. Evidence is fresh only when its sha equals `HEAD`; any commit since invalidates it. Work done outside the gate (a code review that already ran build/tests, an earlier `/security-review`) counts on equal terms — provenance is irrelevant, recoverability is not. A surviving artifact matching `HEAD` is credited and backfilled into the ledger; an unrecorded claim is not evidence. `trackbed-orchestrate` is the recorder — foreign skills are never modified to report into Trackbed. Checks conditional on the work (doc comments on touched `.cs`/`.cpp`) are conditional on the **diff, not on tool availability**: subject present with no verifier is **red**, never a silent skip.
 
 ## 4. Storage model
 
@@ -54,6 +56,7 @@ shape: populated | greenfield   # whether the epic already had stories at init (
 adr_mode: read | read-create | skip   # how ADRs are handled (default: read)
 prd_path: docs/PRD-DEMO-100.md        # where the PRD lives (read or created; may be absent under project anchor)
 adr_path: docs/adr/                      # ADR location (may be external/untracked; absent if adr_mode=skip)
+onboarding_path: ONBOARDING.md           # optional — where the verification contract lives (§4.4); absent if the repo has none
 roadmap_path: .planning/ROADMAP.md       # gsd mode → GSD file; native → .trackbed/<key>/roadmap.yml
 created: 2026-06-13
 ```
@@ -100,7 +103,22 @@ phases:
 
 Idempotency comes from: only act on phases whose mapping is empty/absent or `pending`; never re-touch a real key. **Native mode:** the roadmap *is* the mapping (the phase's `jira:` field) — no separate file. **GSD mode:** since GSD's `ROADMAP.md` is never modified to hold keys, the mapping lives in the separate Trackbed-owned `.trackbed/<key>/phase-jira.md`, kept in sync with `ROADMAP.md` on every insert/delete/ticket.
 
-### 4.4 Lifecycle — `.trackbed/` is scaffolding, not deliverable
+### 4.4 Verification contract (what `trackbed-dod` reads to know how to verify)
+
+Several DoD checks need project-specific commands (test suite, build, lint) and may declare a project DoD skill. Those live in an **optional** block Trackbed reads but never owns, recorded in the manifest as `onboarding_path` (default: the first of `ONBOARDING.md`, `docs/ONBOARDING.md`, or `CONTRIBUTING.md` that exists):
+
+```yaml
+verification:
+  test: "dotnet test"              # check 2
+  build: "dotnet build"            # check 3
+  lint: "dotnet format --verify-no-changes"
+  doc_check: "pwsh scripts/check-xml-docs.ps1 -Changed"   # check 8 fallback verifier
+  project_dod_skill: /my-project-dod                       # check 10 — absent = the check does not exist
+```
+
+**Every field is optional, and the block itself is optional** — Trackbed must work in a repo with none of it (this repo has no build or test suite at all). Resolution order per command: the `verification` block → the repo's obvious convention (a lone `*.sln`, `package.json` scripts, a `Makefile` target) → **ask the user once and offer to record the answer**. A command that cannot be resolved makes its check red (unverifiable), not silently skipped — except where the check has no subject at all, which is `skipped (n/a)`. Trackbed never invents a command and never guesses a second time; it records what the user tells it so the next gate is cheaper.
+
+### 4.5 Lifecycle — `.trackbed/` is scaffolding, not deliverable
 
 `.trackbed/` is **noise to a code reviewer**, but it **stays git-tracked through development** — it is *not* gitignored (an untracked dir is liable to be deleted as noise by a panicking agent). It is **removed manually at the very end**, just before the final PR — a deliberate one-off delete (or a simple prompt), not an automated Trackbed step. Same intent as stripping GSD's `.planning/`, but done by hand.
 
@@ -113,7 +131,10 @@ Idempotency comes from: only act on phases whose mapping is empty/absent or `pen
 | `trackbed` | **user-facing** (the only `/command`) | Front door. Determine anchor (epic/project), route to init or orchestrate. |
 | `trackbed-init` | internal | One-time planning: PRD → ADR → roadmap → tickets + set format switch. Skippable. |
 | `trackbed-orchestrate` | internal | Living roadmap+status+notes; compute next phase; hand off; record; runtime mutation. |
+| `trackbed-plan` | user-facing | Persist a phase's plan so it never executes planless. Simple mode drafts from the roadmap's `scope`/`done`; naming a tool in the prompt runs that tool's planning flow and adopts its output. The **only** skill that authors plans. |
+| `trackbed-sync` | user-facing | Reconcile the planning layer to the live roadmap — state file, roadmap, phase↔ticket mapping, viewer — and flag phases missing a plan. Read-reconcile only; the single definition of the reconcile, invoked by orchestrate. |
 | `trackbed-adr` | internal + shared + standalone | Read existing ADRs, gap-fill new ones. Used by init, by stories, or standalone on an epic/project that needs only ADRs (no roadmap). |
+| `trackbed-view` | user-facing | Regenerate and open the roadmap viewer — one self-contained HTML page (phase board + rail + dependency graph). Read-only projection. |
 | `trackbed-dod` | internal | Phase-transition gate: verifies the outgoing phase's DoD checklist with evidence, writes the gate stamp. |
 
 ### 5.1 `trackbed` (front door)
