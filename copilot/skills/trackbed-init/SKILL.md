@@ -18,7 +18,7 @@ Skip yourself entirely if a roadmap already exists (`trackbed` will have routed 
 
 ## Hard rules (never violate)
 
-- **Skills-only.** No scripts, no Python, no hooks. You do everything by reading and writing markdown/YAML by convention.
+- **Skills-first.** No required scripts, no Python dependencies. You do everything by reading and writing markdown/YAML by convention. Hooks, if present, are an optional freshness layer only — never required.
 - **Firewall.** The PRD, the ADRs, and every Jira ticket must be **framework-neutral**: plain domain language only. No "phase", "roadmap", "GSD", "Trackbed", "orchestrate" vocabulary, and no `.planning/` or `.trackbed/` paths in any team-facing output. Internal phase↔ticket mapping never leaks into Jira.
 - **Always ask before any Jira write.** Never auto-create or auto-link a ticket. Confirm each one.
 - **Format locked once.** The storage format (`gsd` or `native`) is chosen in step 3 and written to the manifest. Never switch it mid-roadmap.
@@ -36,6 +36,7 @@ shape: populated | greenfield   # set in step 0 (project anchor is always greenf
 adr_mode: read | read-create | skip   # set in step 2 — default: read
 prd_path: docs/PRD-DEMO-100.md   # set in step 1 (may be absent in project anchor)
 adr_path: docs/adr/                 # set in step 2 (may be external/untracked; absent if adr_mode=skip)
+onboarding_path: ONBOARDING.md      # optional — where the verification contract lives (test/build/lint commands the DoD gate uses); absent if the repo has none
 roadmap_path: .planning/ROADMAP.md  # set in step 3 — see step 3 for per-mode value
 created: 2026-06-13
 ```
@@ -172,6 +173,6 @@ Write every resulting key back into the phase↔ticket mapping, **per mode**:
 Stop when **all** of these hold:
 - the roadmap exists in the locked format, and the state file exists alongside it (`.planning/STATE.md` in gsd mode, `.trackbed/<key>/state.yml` in native mode),
 - tickets are reconciled per anchor: **epic anchor** → every phase ticketed (linked or created, real keys written back); **project anchor** → either every phase ticketed (if the user opted into Jira) or all phases intentionally local,
-- the manifest is written with `anchor`, `key`, `shape`, `format`, `adr_mode`, `roadmap_path`, and (when applicable) `prd_path` and `adr_path` (omitted when not produced / `adr_mode: skip`).
+- the manifest is written with `anchor`, `key`, `shape`, `format`, `adr_mode`, `roadmap_path`, and (when applicable) `prd_path`, `adr_path`, and `onboarding_path` (each omitted when not produced / not present).
 
 Return control to `trackbed`, which hands off to `trackbed-orchestrate`. You do **not** drive execution.

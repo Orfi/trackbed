@@ -21,9 +21,27 @@ criteria live disconnected from the phase record. The `/dod` skill the feedback 
   when `trackbed-orchestrate` computes the next phase, the outgoing phase must carry a green (or
   waived) gate stamp produced by `trackbed-dod`. No stamp / red stamp → transition refused.
   Enforcement is by convention (orchestrate's instructions), not by hooks.
-- **D3 — Nine universal checks** (§3), all evidence-based. Checks 8–9 are capability-conditional:
-  they run only when their backing tool exists in the session; otherwise stamped
-  `skipped (unavailable)` — visible, never a silent pass, never a blocker.
+- **D3 — Nine universal checks** (§3), all evidence-based. Checks 8–9 are conditional, but *(amended
+  2026-07-30)* **conditional on the diff, not on tooling**. Check 8 applies whenever the phase touched
+  `.cs`/`.cpp`/`.h`; it is satisfied by fresh ledger evidence, the doc skill, or the repo's own checker
+  (`scripts/check-xml-docs.ps1 -Changed`) — and when the diff touches those types with **no verifier
+  available it is red, not skipped**. Undocumented public surface is a real gap; a missing tool does not
+  make it disappear. Check 9 keeps `skipped (unavailable)` because it has no offline fallback. A check
+  with nothing to verify is `skipped (n/a)`; a check whose subject exists but cannot be verified is red.
+- **D12 — Evidence ledger; the gate verifies, it does not re-execute** *(added 2026-07-30)*. Gate-relevant
+  tools are frequently run before the gate — independently, or inside a language code review that already
+  executes format/build/test. Re-running them is waste, but credit requires recoverable evidence pinned to
+  the current diff. The `## DoD` note table gains a **`sha` column** — that table *is* the ledger.
+  Freshness is **strict sha equality** with `HEAD`; any commit since invalidates. Three provenance tiers:
+  a fresh ledger entry passes (cited); a surviving artifact (`.trx`, build log, review report) matching
+  `HEAD` passes and the gate **backfills** the entry; a conversational claim alone is *not* evidence — the
+  gate asks for the summary line, else re-runs, reds, or takes a waiver. Provenance is irrelevant
+  (hand-written == skill-written); recoverability is what matters.
+- **D13 — Trackbed owns the recording** *(added 2026-07-30)*. `trackbed-orchestrate` Step 4 appends ledger
+  rows as gate-relevant tools run. Foreign skills (`/security-review`, the `orfi-kit-*` skills) are
+  **never modified** — they are global/built-in and Trackbed takes no dependency on changing them. The
+  edit surface stays the two skills Trackbed owns. Residual: a tool run outside an orchestrate turn has no
+  recorder, which degrades to the artifact/ask tiers of D12 rather than to silent credit.
 - **D4 — Project DoD pass-through.** If ONBOARDING declares a project-specific DoD skill (e.g. one
   that runs Snyk), `trackbed-dod` invokes it as one extra checklist item and records its verdict.
   Its internals are the project's business; absent a declaration, the item does not exist.
@@ -36,7 +54,18 @@ criteria live disconnected from the phase record. The `/dod` skill the feedback 
   closed are never retro-gated; orchestrate must not refuse to run on an old roadmap.
 - **D8 — Anti-bloat rules.** The stamp is one compact line, **overwritten** each run — current truth
   only. Evidence and history go to the per-phase note. Criteria are referenced by pointer, never
-  copied. The state file stays a fixed-shape digest with replaced (not appended) sections.
+  copied. The state file stays a fixed-shape digest with replaced (not appended) sections. The `## DoD`
+  section — ledger included — is **replaced** per run, so the sha column records current-diff evidence
+  only and never grows into a run history.
+- **D14 — Verification contract, optional and discoverable** *(added 2026-07-30)*. The checks referenced
+  "ONBOARDING" for test/build/lint commands and the project-DoD declaration, but nothing defined that
+  file's location or schema — checks 2/3/8/10 were unrunnable by specification. Now spec §4.4: an
+  **optional** `verification:` block (`test`, `build`, `lint`, `doc_check`, `project_dod_skill`) in the file
+  recorded as `onboarding_path` in the manifest, defaulting to `ONBOARDING.md` / `docs/ONBOARDING.md` /
+  `CONTRIBUTING.md`. Every field and the block itself are optional — Trackbed must work in a repo with
+  none of it. Resolution: contract → obvious repo convention → **ask once and offer to record**. Never
+  invent a command, never guess twice. Unresolvable-but-applicable ⇒ red; no subject at all ⇒
+  `skipped (n/a)`.
 - **D9 — Out of scope.** PR creation/gating, `.trackbed/` strip automation, enforcement hooks,
   git-derived status sync (parked — independent of the gate).
 - **D10 — Packaging.** Ships in all three agent variants (`claude/`, `copilot/`, `opencode/` — the
@@ -63,13 +92,17 @@ the phase note). Every item is binary: pass, fail, or waived-with-reason. Unveri
 6. **Commits clean** — repo commit format respected; no secrets in tracked files.
 7. **Planning files current** — phase status, notes, phase↔ticket mapping updated; roadmap view
    regenerated (or hook confirmed to have done it).
-8. **Doc comments** *(conditional)* — `/orfi-kit-xml-docs` (C#/XML-doc languages) or
-   `/orfi-kit-doxygen-docs` (C++) run over the phase's touched files. Firewall on comments: no
-   narrative comments and no Trackbed/GSD vocabulary ("phase", "roadmap", "gate", ticket-flow terms)
-   in code comments — verified by grep over the diff. **Test files get no doc comments** — only
-   regular informative comments where needed; doc-comment blocks in tests are a violation.
-9. **Security** *(conditional)* — `/security-review` over the phase's diff. High/critical findings
-   must be fixed; medium and below recorded in the phase note.
+8. **Doc comments** *(conditional on the diff)* — applies whenever the phase touched `.cs`/`.cpp`/`.h`.
+   Satisfied by fresh ledger evidence, `/orfi-kit-xml-docs` (C#) or `/orfi-kit-doxygen-docs` (C++), or
+   the repo's own checker; **red when none is available** (D3). Firewall on comments: no narrative
+   comments and no Trackbed/GSD vocabulary ("phase", "roadmap", "gate", ticket-flow terms) in code
+   comments — verified by grep over the diff. **Test files get no doc comments** — only regular
+   informative comments where needed; doc-comment blocks in tests are a violation.
+9. **Security** *(conditional)* — fresh ledger evidence, else `/security-review` over the phase's diff;
+   `skipped (unavailable)` when neither (no offline fallback exists). High/critical findings must be
+   fixed; medium and below recorded in the phase note.
+
+Every check consults the **ledger first** (D12) and re-runs only what is missing or stale.
 
 Plus, when declared (D4): **10. Project DoD** — the declared project skill's verdict.
 

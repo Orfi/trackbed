@@ -15,7 +15,7 @@ The manifest's `anchor` tells you whether this is an `epic` (Jira-backed) or a `
 
 ## Non-negotiables
 
-- **Skills-only.** No scripts, no Python, no hooks. You do everything by reading and writing markdown/YAML by convention.
+- **Skills-first.** No required scripts, no Python dependencies. You do everything by reading and writing markdown/YAML by convention. Hooks are permitted as an **optional freshness layer only** (e.g. regenerating `roadmap.html` on a planning-file write); they never enforce anything, and you must work identically with no hooks installed.
 - **The roadmap is the single source of truth.** Re-read it from disk at the start of every orchestration turn. Never trust stale in-memory state. This is how the "rails the car can't jump" guarantee holds without code.
 - **Firewall.** Jira tickets, the PRD, and ADRs stay framework-neutral — plain domain language, no GSD/Trackbed vocabulary, no `.planning/` or `.trackbed/` paths. The phase↔ticket mapping lives only in the roadmap and never leaks into Jira.
 - **Always ask before any Jira write** (create or link). Never auto-write a ticket. Under a `project` anchor, Jira may be unused entirely — do not push tickets on the user.
@@ -76,7 +76,8 @@ When a phase comes back (green or waived gate):
 
 1. **Status** — set the phase `done`, or back to `blocked`/`current` with reason. Clear or update `owes`.
 2. **Notes** — narrative per-phase memory: what worked, what didn't, what was **postponed** or **moved to another phase** (name the phase id), implementation notes, and forward notes about future phases. Notes are the durable memory of the roadmap — write them even when a phase succeeds cleanly.
-3. **Reconcile everything else — invoke `trackbed-sync`.** The state file, roadmap, phase↔ticket mapping, and viewer are all brought back in step by `trackbed-sync` (its logic lives there, defined once; do not duplicate it here). It also flags any phase missing a plan. Call it after the status/notes update above.
+3. **Record gate-relevant tool runs as they happen (the evidence ledger).** Whenever a tool whose output a DoD check would need runs during this phase — the test suite, a build/lint, a code review, `/security-review`, a doc check — append a row to the `## DoD` table in the phase note: the tool, the current commit sha, and the result summary. You are the recorder because you own the note; the tools themselves are foreign skills and are never modified to do this. A run you fail to record costs `trackbed-dod` a re-run, or forces it red.
+4. **Reconcile everything else — invoke `trackbed-sync`.** The state file, roadmap, phase↔ticket mapping, and viewer are all brought back in step by `trackbed-sync` (its logic lives there, defined once; do not duplicate it here). It also flags any phase missing a plan. Call it after the status/notes update above.
 
 **Update trigger — not only at phase hand-off/return.** Trackbed has no engine; these files stay current only because the agent keeps them so. Invoke `trackbed-sync` on **any material change**, unprompted — a commit landing, a gate/test result, a status flip, a scope change, a blocker appearing or clearing — not merely when a phase is dispatched or comes back. The user should never have to ask you to "update the plan"; keeping the planning layer in sync at every transition is intrinsic to orchestration, not a separate chore.
 
@@ -101,7 +102,7 @@ Trackbed ships a single self-contained HTML viewer (`viz/roadmap.html` in the re
 
 1. Read the template — `roadmap-template.html` bundled with the `trackbed-view` skill (everything except the `DATA` object is generic and copied verbatim).
 2. Rebuild only the `DATA` object from the live roadmap — one entry per phase with `id`, `scope`, `depends`, `done`, `jira` (omit under a project anchor with no Jira), `status` (`done|current|blocked|todo` — never write `next`; the viewer computes it), `owes`, and `inserted` for decimal insertions. Set `anchor`, `key`, and (if known) `jiraBase`.
-3. Write the result to `.trackbed/<key>/roadmap.html`, overwriting the previous copy. This is plain file I/O by convention — no scripts, consistent with skills-only.
+3. Write the result to `.trackbed/<key>/roadmap.html`, overwriting the previous copy. This is plain file I/O by convention — no required scripts, consistent with skills-first.
 
 The viewer reads the same fields you already maintain, so regeneration is mechanical; it never invents data the roadmap doesn't have.
 
@@ -121,6 +122,7 @@ phases:
     done: "code + gates"          # explicit done-criteria
     jira: DEMO-102              # link state — see below (native mode home for the mapping)
     status: done | current | blocked | todo   # persisted only; "next" is computed, never stored
+    gate: "green (2026-07-18, 9/9 checks, tests 47/47)"   # DoD stamp from trackbed-dod — one line, overwritten each run; green | red | waived. Absent = ungated (grandfathered)
     inserted: false               # true for a runtime decimal insertion (mirrors GSD's "(INSERTED)")
     owes: []                      # gates / verification not yet run
     notes: |                      # per-phase memory
