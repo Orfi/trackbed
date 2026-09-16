@@ -68,9 +68,9 @@ criteria live disconnected from the phase record. The `/dod` skill the feedback 
   `skipped (n/a)`.
 - **D9 — Out of scope.** PR creation/gating, `.trackbed/` strip automation, enforcement hooks,
   git-derived status sync (parked — independent of the gate).
-- **D10 — Packaging.** Ships in all three agent variants (`claude/`, `copilot/`, `opencode/` — the
-  latter two consume Claude's skill format), both installers (`install.sh`, `install.ps1`), README
-  skill list, CHANGELOG.
+- **D10 — Packaging.** Ships in all four agent variants (`claude/`, `opencode/` — skills shared;
+  `copilot/`, `codex/` — each an adapted skill copy), both installers (`install.sh`, `install.ps1`),
+  README skill list, CHANGELOG.
 - **D11 — Viewer.** `trackbed-view`'s `roadmap-template.html` renders the gate status per phase, so
   the stamp is visible in the artifact people actually read.
 
@@ -129,7 +129,8 @@ replaced per run under a `## DoD` heading.
   implementing §3–§4; `claude/skills/trackbed-orchestrate/SKILL.md` amended to require the stamp at
   transition (with D7 grandfathering).
 - **T3 — Propagation + surfaces.** Viewer gate rendering (D11); copy/adapt skill + orchestrate change
-  to `copilot/` and `opencode/`; both installers deploy the new skill; README skill list; CHANGELOG.
+  to `copilot/`, `codex/`, and `opencode/`; both installers deploy the new skill; README skill list;
+  CHANGELOG.
 
 Each task is relayed, executed, reviewed by the Architect against this document, then the next is
 issued. Commit format: `type: VERB: description` per repo history.

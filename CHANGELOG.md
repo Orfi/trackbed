@@ -67,6 +67,13 @@ diff-conditional rather than tool-conditional.
   installed.
 
 ### Added
+- **Fourth runtime — OpenAI Codex CLI.** New `codex/` surface: an own adapted skill copy
+  (`codex/skills/`, executor text adapted to Codex — Codex CLI itself, or a Codex subagent) with
+  **no command file** (in Codex a skill is its own entry point, selected via `/skills` or mentioned
+  with `$`). Both installers (`install.sh`, `install.ps1`) gained a `4) OpenAI Codex CLI` option —
+  install/uninstall to `$CODEX_HOME/skills` (default `~/.codex/skills/`), independent of the
+  Claude/OpenCode/Copilot paths. README (intro, executors, install prompt, layout, where-things-land)
+  and spec §7 platform notes updated to four runtimes.
 - **`trackbed-plan` skill** — persists a phase's plan into the tracked planning
   layer so no phase is ever executed planless. `[phase]` is optional (defaults to
   the `current` phase). **Simple mode** drafts from the roadmap's `scope`/`done`;
