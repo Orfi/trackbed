@@ -6,7 +6,7 @@
 # Trackbed itself is skills-only (no scripts at runtime). This script is
 # install-time plumbing only: it copies (or symlinks) the skills (and, for
 # Claude Code / OpenCode, the command) into the right directories for
-# Claude Code, OpenCode, and/or GitHub Copilot CLI.
+# Claude Code, OpenCode, GitHub Copilot CLI, and/or OpenAI Codex CLI.
 #
 # Usage:
 #   ./install.ps1                 interactive: asks which runtime(s) to install for
@@ -17,7 +17,10 @@
 # Claude Code + OpenCode share one skill source (claude/skills) and the
 # OpenCode conflict rule below. Copilot uses its OWN source (copilot/skills,
 # adapted executor text) and its own home (~/.copilot/skills) — independent,
-# no command file (in Copilot a skill IS its slash command).
+# no command file (in Copilot a skill IS its slash command). Codex does the
+# same: its own source (codex/skills, adapted executor text) into
+# $env:CODEX_HOME/skills (default ~/.codex/skills) — independent, no command
+# file (in Codex a skill is selected via /skills or mentioned with $).
 #
 # Conflict rule (OpenCode reads BOTH ~/.claude/skills and ~/.config/opencode/skills):
 # those skills get exactly ONE home per machine so the two never drift —
@@ -39,6 +42,7 @@ $ErrorActionPreference = 'Stop'
 $RepoDir        = Split-Path -Parent $MyInvocation.MyCommand.Path
 $SkillsSrc      = Join-Path $RepoDir 'claude/skills'        # Claude Code + OpenCode share this source
 $CopilotSkillsSrc = Join-Path $RepoDir 'copilot/skills'     # Copilot has its own adapted copy
+$CodexSkillsSrc = Join-Path $RepoDir 'codex/skills'         # Codex has its own adapted copy
 $CcCmdSrc       = Join-Path $RepoDir 'claude/commands/trackbed.md'
 $OcCmdSrc       = Join-Path $RepoDir 'opencode/commands/trackbed.md'
 
@@ -50,6 +54,8 @@ $ClaudeCmds    = Join-Path $Home_ '.claude/commands'
 $OpencodeSkills = Join-Path $XdgConfig 'opencode/skills'
 $OpencodeCmds  = Join-Path $XdgConfig 'opencode/commands'
 $CopilotSkills = Join-Path $Home_ '.copilot/skills'         # Copilot's own home — no command file
+$CodexHome     = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $Home_ '.codex' }
+$CodexSkills   = Join-Path $CodexHome 'skills'               # Codex's own home — no command file
 
 $Skills = @('trackbed','trackbed-init','trackbed-orchestrate','trackbed-plan','trackbed-sync','trackbed-adr','trackbed-dod','trackbed-view')
 
@@ -98,27 +104,29 @@ if (-not (Test-Path $SkillsSrc)) { Die "skills not found at $SkillsSrc - run thi
 
 # --- runtime selection -------------------------------------------------------
 
-$WantCC = $false; $WantOC = $false; $WantCP = $false
+$WantCC = $false; $WantOC = $false; $WantCP = $false; $WantCX = $false
 
 Say 'Trackbed installer'
 Say 'Install for which runtime(s)?'
 Say '  1) Claude Code'
 Say '  2) OpenCode'
 Say '  3) GitHub Copilot CLI'
-Say "Select one or more (e.g. '1', '3', or '1 2 3' / '1,2' for several)."
+Say '  4) OpenAI Codex CLI'
+Say "Select one or more (e.g. '1', '3', or '1 2 3 4' / '1,2' for several)."
 $choice = Read-Host 'Choice'
 
-# Accept space- or comma-separated selections (1, 2, 3, "1 2", "1,3", ...).
+# Accept space- or comma-separated selections (1, 2, 3, 4, "1 2", "1,3", ...).
 foreach ($n in ($choice -split '[,\s]+' | Where-Object { $_ -ne '' })) {
     switch ($n) {
         '1' { $WantCC = $true }
         '2' { $WantOC = $true }
         '3' { $WantCP = $true }
-        default { Die "invalid choice: '$n' (pick 1, 2 and/or 3)" }
+        '4' { $WantCX = $true }
+        default { Die "invalid choice: '$n' (pick 1, 2, 3 and/or 4)" }
     }
 }
 
-if (-not ($WantCC -or $WantOC -or $WantCP)) { Die 'no runtime selected' }
+if (-not ($WantCC -or $WantOC -or $WantCP -or $WantCX)) { Die 'no runtime selected' }
 
 # --- uninstall ---------------------------------------------------------------
 
@@ -137,6 +145,9 @@ if ($Uninstall) {
     }
     if ($WantCP) {
         Remove-SkillsFrom $CopilotSkills
+    }
+    if ($WantCX) {
+        Remove-SkillsFrom $CodexSkills
     }
     Say 'Done.'
     exit 0
@@ -175,12 +186,17 @@ elseif ($WantOC) {
     Place $OcCmdSrc (Join-Path $OpencodeCmds 'trackbed.md')
 }
 
-# --- Copilot CLI (independent: own source, own home, no command file) --------
+# --- Copilot CLI + Codex CLI (independent: own source, own home, no command file) ---
 
 if ($WantCP) {
     Say 'GitHub Copilot CLI - skills go to ~/.copilot/skills (the skill is its own slash command).'
     Install-SkillsTo $CopilotSkills $CopilotSkillsSrc
 }
 
+if ($WantCX) {
+    Say 'OpenAI Codex CLI - skills go to $env:CODEX_HOME/skills (default ~/.codex/skills; the skill is selected via /skills or mentioned with $).'
+    Install-SkillsTo $CodexSkills $CodexSkillsSrc
+}
+
 Say ''
-Say 'Done. Invoke with /trackbed <jira-epic-key | project-slug>'
+Say 'Done. Invoke /trackbed <jira-epic-key | project-slug> in Claude Code / OpenCode / Copilot CLI, or select the trackbed skill in Codex CLI.'

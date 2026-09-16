@@ -8,7 +8,7 @@
 
 ## 1. What Trackbed is
 
-Trackbed is a thin **roadmap + status + orchestration** layer for working through a body of work — a Jira **epic** or a standalone **project** — implemented entirely as Claude Code / OpenCode **skills and one slash command** — no required scripts, no Python dependencies; hooks exist only as an optional freshness layer (see §3, principle 4).
+Trackbed is a thin **roadmap + status + orchestration** layer for working through a body of work — a Jira **epic** or a standalone **project** — implemented entirely as **skills** (plus one thin slash command on the runtimes that need it) for Claude Code, OpenCode, GitHub Copilot CLI, and OpenAI Codex CLI — no required scripts, no Python dependencies; hooks exist only as an optional freshness layer (see §3, principle 4).
 
 It keeps the one valuable thing from GSD — the **route and manifest** (ordered phases, dependencies, "what's owed", per-phase memory) — and lets a lightweight executor (Superpowers or vanilla Claude Code) drive each phase. "Keep the rails, lose the train."
 
@@ -190,8 +190,9 @@ Honors the `adr_mode` passed by the caller: **`read`** (default) = steps 1–2 o
 
 ## 7. Platform notes
 
-- Skills are markdown (`SKILL.md` + YAML frontmatter), compatible across three runtimes:
+- Skills are markdown (`SKILL.md` + YAML frontmatter), compatible across four runtimes:
   - **Claude Code** — skills at `~/.claude/skills/`, command at `~/.claude/commands/trackbed.md`.
   - **OpenCode** — reads `~/.claude/skills/` natively (or its own `~/.config/opencode/skills/`); command copied to `~/.config/opencode/commands/trackbed.md`.
   - **GitHub Copilot CLI** — skills at `~/.copilot/skills/`; no command file (a skill is its own slash command). Uses its own skill copy because the executor reference differs.
-- In this repo each runtime has its own surface: `claude/` (skills + command), `opencode/` (command only — skills shared with `claude/`), and `copilot/` (its own adapted skill copy). The spec lives at `trackbed/trackbed-spec.md`. Installation into the runtimes is handled by `install.sh` (interactive runtime selection), which is install-time plumbing only and does not violate the skills-first rule.
+  - **OpenAI Codex CLI** — skills at `$CODEX_HOME/skills/` (default `~/.codex/skills/`); no command file (a skill is its own entry point, selected via `/skills` or mentioned with `$`). Uses its own skill copy because the executor reference differs.
+- In this repo each runtime has its own surface: `claude/` (skills + command), `opencode/` (command only — skills shared with `claude/`), and `copilot/` and `codex/` (each its own adapted skill copy). The spec lives at `trackbed/trackbed-spec.md`. Installation into the runtimes is handled by `install.sh` / `install.ps1` (interactive runtime selection), which is install-time plumbing only and does not violate the skills-first rule.

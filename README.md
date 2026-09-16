@@ -4,9 +4,9 @@
 
 **Keep the rails, lose the train.**
 
-Trackbed is a thin **roadmap + status + orchestration** layer for working through a body of work — a Jira **epic** or a standalone **project**. It is implemented entirely as **skills** (plus a thin slash command on the runtimes that need one) for Claude Code, OpenCode, and GitHub Copilot CLI: no required scripts, no Python dependencies; hooks exist only as an optional freshness layer.
+Trackbed is a thin **roadmap + status + orchestration** layer for working through a body of work — a Jira **epic** or a standalone **project**. It is implemented entirely as **skills** (plus a thin slash command on the runtimes that need one) for Claude Code, OpenCode, GitHub Copilot CLI, and OpenAI Codex CLI: no required scripts, no Python dependencies; hooks exist only as an optional freshness layer.
 
-It keeps the one genuinely valuable thing from heavier planning frameworks — the **route and manifest** (ordered phases, dependencies, "what's owed", per-phase memory) — and lets a lightweight executor (Superpowers, vanilla Claude Code, OpenCode, or a Copilot agent) drive each phase. Trackbed owns *where you are and what's next*; it never implements a phase itself.
+It keeps the one genuinely valuable thing from heavier planning frameworks — the **route and manifest** (ordered phases, dependencies, "what's owed", per-phase memory) — and lets a lightweight executor (Superpowers, vanilla Claude Code, OpenCode, a Copilot agent, or Codex CLI) drive each phase. Trackbed owns *where you are and what's next*; it never implements a phase itself.
 
 ---
 
@@ -14,7 +14,7 @@ It keeps the one genuinely valuable thing from heavier planning frameworks — t
 
 Trackbed started as a question about [GSD](https://github.com/glamp/get-shit-done): which part of it is actually valuable, and which part is just machinery you have to adopt wholesale? The valuable part is the **route and manifest** — an ordered set of phases with dependencies, explicit done-criteria, "what's owed", and per-phase memory that carries forward across the whole epic. The machinery is the heavy, opinionated execution engine bolted to it. Trackbed keeps the first and drops the second: **keep the rails, lose the train.**
 
-That split is what makes it **resilient about the executor**. Trackbed never implements a phase itself — it owns the roadmap and hands each phase to whatever you prefer to drive planning, design, and implementation: [Superpowers](https://github.com/obra/superpowers), vanilla Claude Code, OpenCode, or a Copilot agent. The roadmap stays the single source of truth the executor can't jump off — "the rails the car can't jump."
+That split is what makes it **resilient about the executor**. Trackbed never implements a phase itself — it owns the roadmap and hands each phase to whatever you prefer to drive planning, design, and implementation: [Superpowers](https://github.com/obra/superpowers), vanilla Claude Code, OpenCode, a Copilot agent, or Codex CLI. The roadmap stays the single source of truth the executor can't jump off — "the rails the car can't jump."
 
 For Superpowers specifically, this fills the one gap it has. Superpowers is excellent at planning and executing a **single feature** — `writing-plans` produces one plan file of bite-sized tasks, and `executing-plans` / `subagent-driven-development` walk them. But that plan is scoped to one feature; there is no layer **above** it that orders many features/stories, tracks dependencies between them, and remembers where you are across the whole epic.
 
@@ -102,7 +102,7 @@ Phases are walked in **dotted-segment id order** (like version numbers): `3 → 
 
 ## Installation
 
-Run the installer and pick your runtime(s) — Claude Code, OpenCode, GitHub Copilot CLI, or any combination. There are two equivalent installers; use whichever fits your shell:
+Run the installer and pick your runtime(s) — Claude Code, OpenCode, GitHub Copilot CLI, OpenAI Codex CLI, or any combination. There are two equivalent installers; use whichever fits your shell:
 
 ```bash
 git clone https://github.com/Orfi/trackbed.git
@@ -122,8 +122,9 @@ Install for which runtime(s)?
   1) Claude Code
   2) OpenCode
   3) GitHub Copilot CLI
-Select one or more (e.g. '1', '3', or '1 2 3' / '1,2' for several).
-Choice: 1 2 3
+  4) OpenAI Codex CLI
+Select one or more (e.g. '1', '3', or '1 2 3 4' / '1,2' for several).
+Choice: 1 2 3 4
 ```
 
 | Flag | Effect |
@@ -133,7 +134,7 @@ Choice: 1 2 3
 | `--uninstall` | Remove an existing Trackbed install (prompts for runtime the same way) |
 | `--help` | Show usage |
 
-Then invoke `/trackbed <jira-epic-key | project-slug>` in any installed runtime.
+Then invoke `/trackbed <jira-epic-key | project-slug>` in Claude Code, OpenCode, or Copilot CLI — or, in Codex CLI, select the `trackbed` skill (via `/skills` or `$`) and give it the same argument.
 
 ### Layout
 
@@ -155,12 +156,14 @@ opencode/                     # OpenCode surface (command only — skills shared
 └── commands/trackbed.md      # shares claude/skills/ — trackbed-dod included automatically
 copilot/                      # GitHub Copilot CLI surface (own skill copy, executor text adapted)
 └── skills/ (trackbed, trackbed-init, trackbed-orchestrate, trackbed-plan, trackbed-sync, trackbed-adr, trackbed-dod, trackbed-view)
+codex/                        # OpenAI Codex CLI surface (own skill copy, executor text adapted)
+└── skills/ (trackbed, trackbed-init, trackbed-orchestrate, trackbed-plan, trackbed-sync, trackbed-adr, trackbed-dod, trackbed-view)
 viz/roadmap.html              # the roadmap viewer template (sample data, opens standalone)
 install.sh                    # installer — macOS / Linux / Git Bash / WSL
 install.ps1                   # installer — Windows PowerShell / pwsh (identical behavior)
 ```
 
-Claude Code and OpenCode share one skill source (`claude/skills/`) — only the command file format differs. Copilot CLI keeps its **own** copy (`copilot/skills/`) because its executor differs and, in Copilot, a skill *is* its slash command — so there is no command file.
+Claude Code and OpenCode share one skill source (`claude/skills/`) — only the command file format differs. Copilot CLI keeps its **own** copy (`copilot/skills/`) because its executor differs and, in Copilot, a skill *is* its slash command — so there is no command file. Codex CLI keeps its **own** copy (`codex/skills/`) for the same reason — the executor differs and, in Codex, a skill is its own entry point (selected via `/skills` or `$`), so there is no command file there either.
 
 ### Where things land
 
@@ -172,8 +175,9 @@ The skills are shared across runtimes; only the command file differs in format. 
 | OpenCode only | `~/.config/opencode/skills/` | `~/.config/opencode/commands/trackbed.md` |
 | Claude Code + OpenCode | `~/.claude/skills/` *(OpenCode reads it natively)* | both command files |
 | GitHub Copilot CLI | `~/.copilot/skills/` | *(none — the skill is the command)* |
+| OpenAI Codex CLI | `$CODEX_HOME/skills/` (default `~/.codex/skills/`) | *(none — select the skill via `/skills` or `$`)* |
 
-On an OpenCode-only machine, Claude Code need not be installed — `~/.claude/skills/` is just a path OpenCode also reads; the installer uses the OpenCode-native path instead. Copilot is independent of both: it has its own home (`~/.copilot/skills/`) and never shares or collides with the Claude/OpenCode skill paths.
+On an OpenCode-only machine, Claude Code need not be installed — `~/.claude/skills/` is just a path OpenCode also reads; the installer uses the OpenCode-native path instead. Copilot is independent of both: it has its own home (`~/.copilot/skills/`) and never shares or collides with the Claude/OpenCode skill paths. Codex is independent too: it has its own home (`$CODEX_HOME/skills/`, default `~/.codex/skills/`) and never shares or collides with any other runtime's skill paths.
 
 ## Versioning
 
