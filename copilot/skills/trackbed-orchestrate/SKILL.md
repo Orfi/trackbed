@@ -20,6 +20,7 @@ The manifest's `anchor` tells you whether this is an `epic` (Jira-backed) or a `
 - **Firewall.** Jira tickets, the PRD, and ADRs stay framework-neutral — plain domain language, no GSD/Trackbed vocabulary, no `.planning/` or `.trackbed/` paths. The phase↔ticket mapping lives only in the roadmap and never leaks into Jira.
 - **Always ask before any Jira write** (create or link). Never auto-write a ticket. Under a `project` anchor, Jira may be unused entirely — do not push tickets on the user.
 - **Format is locked.** Never switch GSD↔native for the life of this roadmap.
+- **Story-plan opt-in.** A GSD phase entry's explicit `Plan targets:` roster, or a native phase's `plan_targets:` list, enables one-plan-per-story handoff. Without it, preserve legacy phase-plan behavior, even for an older phase with multiple Jira keys or plan files. The roadmap roster is authoritative; plan frontmatter is the binding.
 
 ## Step 1 — Read the manifest first, then the roadmap
 
@@ -49,16 +50,20 @@ Re-read the roadmap, then:
    - **todo** — not yet reachable (persisted status)
 3. **Surface what the current and next phases owe** — the `owes` list (gates not yet run, verification still outstanding). If a phase claims `done` but `owes` is non-empty, call that out.
 
-## Step 3 — Hand off the phase
+## Step 3 — Hand off the phase or selected story
 
-1. Mark the chosen phase `status: current` (in-progress) in the roadmap and persist it.
-2. **A persisted plan must exist before handoff.** If the phase has no plan in the tracked planning layer (the location `trackbed-plan` writes to), do **not** dispatch — notify the user: "Phase `<id>` has no plan. Run `/trackbed-plan <id>` first." You never author the plan yourself; you only check for it and point at `trackbed-plan`, which owns all plan writing.
-3. Dispatch the phase to the **executor** — Copilot CLI itself, or a Copilot custom agent (e.g. via the `task` tool / `--agent`) — passing the phase `scope` and `done` criteria.
-4. **You do not implement.** You are planning + orchestration only. Trackbed is deliberately resilient about *how* a phase gets built; it only tracks the result.
+1. For a phase with explicit story-plan targets, honor a requested eligible story; otherwise choose the first unfinished eligible story by preferred wave, breaking ties by roster order. A wave is a preference, not a hard blocker unless the roadmap says it is; a missing plan on an earlier story does not prevent choosing another eligible story. Do not select by plan filename or automatically hand off the entire phase. For a phase without such a roster, select the phase as before.
+2. **Check the selected target before changing status or dispatching.** In story mode, require exactly one persisted plan whose frontmatter has the selected phase, a unique stable `plan` number, and exactly one matching `jira` key; honor any plan identity/path reserved in the roadmap roster. Missing: "Phase `<id>` / `<story-key>` has no plan. Run `/trackbed-plan <id> <story-key>` first." Duplicate, wrong-phase, orphaned, or reserved-path conflicts: identify the files and stop that story's handoff until resolved. Neither absence nor ambiguity of one story blocks an unrelated eligible story. In legacy mode, require the phase plan and use the existing `/trackbed-plan <id>` message. You never author plans here.
+3. Mark the chosen phase `status: current` if needed. Dispatch only the selected target to the **executor** — Copilot CLI itself, or a Copilot custom agent (e.g. via the `task` tool / `--agent`) — passing its plan, story acceptance criteria in story mode, and relevant phase `scope`/`done` criteria. On resume, re-read the persisted binding and phase notes; do not infer identity from plan numbering.
+4. **You do not implement.** You are planning + orchestration only. Trackbed is deliberately resilient about *how* work gets built; it only tracks the result.
+
+### Story return in an opted-in phase
+
+When one story comes back, record its Jira key, plan path, actual validation pass/fail/skip or blocked evidence, findings routed to separate issues, and whether that story's acceptance criteria are satisfied in the phase note. Keep the phase `current` while other targets remain. Invoke `trackbed-sync` so the digest and viewer reflect the remaining targets; do not mark the whole phase `done`, invoke the aggregate gate, or transition Jira merely because one story finished. On resume, use this note plus the roadmap roster and plan binding to distinguish finished from unfinished targets.
 
 ## Step 3b — Gate check before marking done
 
-Before marking a phase `done` and advancing to the next, the outgoing phase must pass the `trackbed-dod` gate:
+Before marking a phase `done` and advancing to the next, the outgoing phase must pass the `trackbed-dod` gate. In story mode, this is an aggregate phase-closure gate after every in-scope story has validation evidence; it is not a substitute for a story's own evidence. Never auto-transition Jira; the existing ask-before-write rule still applies:
 
 1. **Read the phase's `gate:` stamp** — native mode: the `gate:` field in `roadmap.yml`; GSD mode: the `gate` column in `.trackbed/<key>/phase-jira.md`.
 2. **Classify the stamp:**
@@ -121,6 +126,7 @@ phases:
     depends: ["11.1"]             # phase ids that must be done first (gates eligibility)
     done: "code + gates"          # explicit done-criteria
     jira: DEMO-102              # link state — see below (native mode home for the mapping)
+    # plan_targets: [DEMO-102, DEMO-103]  # optional opt-in: one plan per listed story
     status: done | current | blocked | todo   # persisted only; "next" is computed, never stored
     gate: "green (2026-07-18, 9/9 checks, tests 47/47)"   # DoD stamp from trackbed-dod — one line, overwritten each run; green | red | waived. Absent = ungated (grandfathered)
     inserted: false               # true for a runtime decimal insertion (mirrors GSD's "(INSERTED)")
@@ -129,7 +135,7 @@ phases:
       what worked, what didn't, postponed, moved-to-phase, impl notes, forward notes
 ```
 
-In GSD mode the same three layers (route, status, notes) live in `.planning/` — read and update those files instead, and **do not modify GSD's `ROADMAP.md` format**. The one thing `.planning/` has no home for is the phase↔ticket mapping: in GSD mode that lives in the separate Trackbed-owned file **`.trackbed/<key>/phase-jira.md`** (a simple `phase-id → JIRA-KEY` table), never inside `ROADMAP.md`.
+In GSD mode the same three layers (route, status, notes) live in `.planning/` — read and update those files instead, and **do not modify GSD's `ROADMAP.md` format**. A multi-story phase may add a plain-text `Plan targets:` roster to its existing phase entry without changing that format. Trackbed's phase↔ticket mapping remains in **`.trackbed/<key>/phase-jira.md`**; mirror the roster there, but never infer plan targets from a legacy row that happens to name several Jira keys.
 
 ## Jira link states (drives the create/link ask)
 

@@ -45,8 +45,8 @@ One planning front door, two hidden internal skills, and a shared ADR specialist
 | `trackbed` | **user-invocable** | Front door. Determine the anchor (epic/project), route to init or orchestrate. Pure dispatcher. |
 | `trackbed-init` | hidden (`user-invocable: false`) | One-time planning: PRD → ADR → roadmap → tickets, and lock the storage format. Skippable. |
 | `trackbed-orchestrate` | hidden (`user-invocable: false`) | Living roadmap + status + notes; compute next phase; hand off; record; absorb runtime mutations. |
-| `trackbed-plan` | **user-invocable** | Persist a phase's plan so it never executes planless. No phase → the current phase. Simple mode drafts from the roadmap's scope/done; naming a tool in the prompt ("using superpowers") runs that tool's planning flow and adopts its output. |
-| `trackbed-sync` | **user-invocable** | Reconcile the planning layer to the live roadmap — state file, roadmap, phase↔ticket mapping, viewer — and flag any phase missing a plan. Read-reconcile only. Invoked by orchestrate on any change; callable directly between turns. |
+| `trackbed-plan` | **user-invocable** | Persist a phase plan, or one selected Jira story's plan when a phase opts into story plans. No phase → the current phase. |
+| `trackbed-sync` | **user-invocable** | Reconcile the planning layer and flag missing or ambiguous plans per phase or explicit story target. Read-reconcile only; invoked by orchestrate on material changes. |
 | `trackbed-adr` | **user-invocable** (shared) | Read existing ADRs, gap-fill new ones. Used by init, or run standalone on a story/epic/project that needs only ADRs — no roadmap required. |
 | `trackbed-view` | **user-invocable** | Open the roadmap viewer in the browser — regenerates a self-contained HTML page (phase board + rail + dependency graph) from the live roadmap, then opens it. Read-only. |
 | `trackbed-dod` | hidden (`user-invocable: false`) | Phase-transition gate: verifies the outgoing phase's DoD checklist with evidence and writes the gate stamp. |
@@ -63,6 +63,8 @@ One planning front door, two hidden internal skills, and a shared ADR specialist
 The front door reads the anchor, checks for an existing roadmap under `.trackbed/<key>/`, then routes to **init** (if nothing exists) or straight to **orchestration** (if a roadmap is already there).
 
 > A single Jira **story** has no roadmap — Trackbed does not apply to it. Stories go straight to execution; they may borrow `trackbed-adr` standalone for decision intake. `trackbed-adr` also runs standalone on an epic or project when you only want ADRs surfaced or created and aren't building a roadmap.
+
+One roadmap phase can contain several Jira stories. Add an explicit `Plan targets:` roster to its GSD roadmap entry (or `plan_targets:` in native mode) to opt into one persisted plan per story. For example, `/trackbed-plan 26 PANV-63211` authors only that story's plan; another story cannot borrow it. GSD plans retain numbered paths such as `.planning/phases/26-testing-validation/26-04-PLAN.md`, with `phase`, stable `plan`, and one `jira` key in frontmatter. Without an explicit roster, legacy phase-plan behavior is unchanged. Preferred waves guide order without renumbering plans or blocking unrelated eligible stories.
 
 ## Visualization
 

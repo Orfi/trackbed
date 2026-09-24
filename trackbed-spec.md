@@ -37,7 +37,7 @@ Every roadmap hangs off an **anchor** (recorded in the manifest as `anchor`):
 2. **Firewall — team-facing outputs stay framework-neutral.** Jira tickets, the PRD, and ADR files must contain **no** GSD/Trackbed vocabulary and **no** `.planning/` or `.trackbed/` paths. They use plain domain language only. Internal phase↔ticket mapping never leaks into Jira.
 3. **Always ask before writing to Jira.** Never auto-create or auto-link a ticket silently. Under a `project` anchor, Jira may be unused entirely.
 4. **Skills-first.** *(Consciously amended 2026-07-18 — supersedes the original skills-only principle.)* The core stays skills-first: the agent reads/writes markdown/YAML by convention; no required executable scripts, no Python dependencies. The roadmap file is the single source of truth and must be re-read (never trusted from stale memory) — this is how the "rails the car can't jump" guarantee is upheld without code. Hooks are permitted as an **optional freshness layer only** (e.g. regenerating `roadmap.html` on planning-file writes); hooks never enforce anything, and Trackbed must remain fully usable with no hooks installed.
-5. **One front door for planning.** Only `trackbed` is the planning/orchestration entry point; `trackbed-init`, `trackbed-orchestrate`, and `trackbed-dod` are hidden (`user-invocable: false`) and reached only through it. The exceptions are the **non-orchestrating** skills, which are user-invocable and runnable standalone between turns because none of them advances the roadmap: `trackbed-adr` (ADR intake, also delegated to by `trackbed-init`), `trackbed-plan` (authors a phase plan), `trackbed-sync` (reconciles the planning layer), and `trackbed-view` (opens the viewer). The rule guards *who may drive the roadmap forward*, not *who may be typed*.
+5. **One front door for planning.** Only `trackbed` is the planning/orchestration entry point; `trackbed-init`, `trackbed-orchestrate`, and `trackbed-dod` are hidden (`user-invocable: false`) and reached only through it. The exceptions are the **non-orchestrating** skills, which are user-invocable and runnable standalone between turns because none of them advances the roadmap: `trackbed-adr` (ADR intake, also delegated to by `trackbed-init`), `trackbed-plan` (authors a phase or selected story plan), `trackbed-sync` (reconciles the planning layer), and `trackbed-view` (opens the viewer). The rule guards *who may drive the roadmap forward*, not *who may be typed*.
 6. **Phase transitions are gated.** The `trackbed-dod` skill gates every phase transition: the outgoing phase must carry a green or waived `gate:` stamp before `trackbed-orchestrate` may advance; a red or missing stamp means the transition is refused. A human may override a red gate — recorded as `gate: waived (date, reason)`, visible and auditable, never silent. The gate applies only to transitions after the skill lands; already-closed phases are never retro-gated. The stamp is one compact line, overwritten each run — current truth only; evidence and history live in the per-phase note.
 
    **The gate verifies evidence; it does not re-execute.** *(Amended 2026-07-30.)* Each check is satisfied by fresh evidence recorded in the per-phase note's `## DoD` ledger — a `sha` column pinning every result to the commit it was produced at. Evidence is fresh only when its sha equals `HEAD`; any commit since invalidates it. Work done outside the gate (a code review that already ran build/tests, an earlier `/security-review`) counts on equal terms — provenance is irrelevant, recoverability is not. A surviving artifact matching `HEAD` is credited and backfilled into the ledger; an unrecorded claim is not evidence. `trackbed-orchestrate` is the recorder — foreign skills are never modified to report into Trackbed. Checks conditional on the work (doc comments on touched `.cs`/`.cpp`) are conditional on the **diff, not on tool availability**: subject present with no verifier is **red**, never a silent skip.
@@ -65,7 +65,7 @@ created: 2026-06-13
 
 ### 4.2 Roadmap content location (depends on format)
 
-- **GSD mode:** roadmap / status / notes live in GSD's `.planning/` files — `ROADMAP.md` plus **`STATE.md`** (GSD's own cross-phase digest, owned by GSD's tooling). Trackbed reads, updates, and backfills them but **never alters GSD's `ROADMAP.md` format**. The one thing `.planning/` has no slot for — the phase↔ticket mapping — lives in a separate Trackbed-owned file `.trackbed/<key>/phase-jira.md` (a `phase-id → JIRA-KEY` table), kept in sync with `ROADMAP.md`. That table also carries a `gate` column holding each phase's DoD stamp (GSD's `ROADMAP.md` is never modified).
+- **GSD mode:** roadmap / status / notes live in GSD's `.planning/` files — `ROADMAP.md` plus **`STATE.md`** (GSD's own cross-phase digest, owned by GSD's tooling). Trackbed reads, updates, and backfills them but **never alters GSD's `ROADMAP.md` format**. A phase may opt into story plans with a plain-text `Plan targets:` roster in its existing roadmap entry. The phase↔ticket mapping lives in a separate Trackbed-owned file `.trackbed/<key>/phase-jira.md`, kept in sync with `ROADMAP.md`; it mirrors any explicit plan-target roster and carries the phase DoD `gate` stamp.
 - **Native mode:** roadmap / status / notes live alongside the manifest in `.trackbed/<key>/`:
   - `roadmap.yml` — ordered phases (see §4.3); the phase's `jira:` field *is* the phase↔ticket mapping (no separate file)
   - `state.yml` — cross-phase digest mirroring STATE.md's fields: `current` (phase + status), `blockers`, `session` (stopped-at / resume-hint). Re-read first every turn.
@@ -86,6 +86,7 @@ phases:
     depends: ["11.1"]
     done: "code + gates"          # explicit done-criteria
     jira: DEMO-102              # link state — see below
+    # plan_targets: [DEMO-102, DEMO-103]  # optional: one persisted plan per listed story
     status: done | current | blocked | todo   # persisted only — "next" is computed each turn, never stored
     gate: "green (2026-07-18, 9/9 checks, tests 47/47)"   # DoD stamp from trackbed-dod — one line, overwritten each run; green | red | waived (date, reason)
     inserted: false               # true for a runtime decimal insertion (mirrors GSD's "(INSERTED)")
@@ -102,6 +103,12 @@ phases:
 - `jira: pending` → decided to create, not yet written
 
 Idempotency comes from: only act on phases whose mapping is empty/absent or `pending`; never re-touch a real key. **Native mode:** the roadmap *is* the mapping (the phase's `jira:` field) — no separate file. **GSD mode:** since GSD's `ROADMAP.md` is never modified to hold keys, the mapping lives in the separate Trackbed-owned `.trackbed/<key>/phase-jira.md`, kept in sync with `ROADMAP.md` on every insert/delete/ticket.
+
+### 4.3a Opt-in story plans
+
+An explicit GSD `Plan targets:` roster or native `plan_targets:` list makes each listed story a separate plan target. Without one, existing phase-plan behavior is unchanged, including old phases with multiple Jira keys or numbered plans. In GSD mode, plans stay in `.planning/phases/<NN>-<slug>/` as `<NN>-PP-PLAN.md`; a target may reserve its stable `PP` identity in the roadmap. Each story plan has frontmatter `phase: <id>`, unique `plan: <number>`, and exactly one `jira: <story-key>`. Plan numbers are identities, not execution order; reordering preferred waves never renames files.
+
+`trackbed-plan <phase> <story-key>` authors only that target. `trackbed-sync` checks every target independently for missing, duplicate, wrong-phase, reserved-path, or orphaned bindings without authoring plans or changing Jira. `trackbed-orchestrate` hands off only a story with one matching plan; a missing or ambiguous plan blocks that story, not unrelated eligible stories. It records each returned story's evidence in the phase note while the phase stays current. The phase-level DoD remains the aggregate closure gate after all targets have evidence. Jira writes still require the existing explicit ask.
 
 ### 4.4 Verification contract (what `trackbed-dod` reads to know how to verify)
 
@@ -131,8 +138,8 @@ verification:
 | `trackbed` | **user-facing** (the only `/command`) | Front door. Determine anchor (epic/project), route to init or orchestrate. |
 | `trackbed-init` | internal | One-time planning: PRD → ADR → roadmap → tickets + set format switch. Skippable. |
 | `trackbed-orchestrate` | internal | Living roadmap+status+notes; compute next phase; hand off; record; runtime mutation. |
-| `trackbed-plan` | user-facing | Persist a phase's plan so it never executes planless. Simple mode drafts from the roadmap's `scope`/`done`; naming a tool in the prompt runs that tool's planning flow and adopts its output. The **only** skill that authors plans. |
-| `trackbed-sync` | user-facing | Reconcile the planning layer to the live roadmap — state file, roadmap, phase↔ticket mapping, viewer — and flag phases missing a plan. Read-reconcile only; the single definition of the reconcile, invoked by orchestrate. |
+| `trackbed-plan` | user-facing | Persist a legacy phase plan or one plan for a selected story in an opted-in phase. The **only** skill that authors plans. |
+| `trackbed-sync` | user-facing | Reconcile the planning layer and report missing or ambiguous plans per phase or explicit story target. Read-reconcile only; invoked by orchestrate. |
 | `trackbed-adr` | internal + shared + standalone | Read existing ADRs, gap-fill new ones. Used by init, by stories, or standalone on an epic/project that needs only ADRs (no roadmap). |
 | `trackbed-view` | user-facing | Regenerate and open the roadmap viewer — one self-contained HTML page (phase board + rail + dependency graph). Read-only projection. |
 | `trackbed-dod` | internal | Phase-transition gate: verifies the outgoing phase's DoD checklist with evidence, writes the gate stamp. |
@@ -167,7 +174,7 @@ Init ends when: roadmap exists, phases are ticketed, manifest is written (`shape
 1. **Read manifest first**, then roadmap + status in the recorded format.
    - If init was skipped and **no manifest exists**: **detect** the format from files present (`.planning/` vs `.trackbed/`), **confirm with the user** ("detected GSD mode — correct?"), then write the manifest.
 2. **Compute "you are here":** next unblocked phase (deps done, not blocked). Show the rail view: done · current · next · blocked-with-reason · todo. Surface what the current/next phase **owes**.
-3. **Hand off** the phase: mark in-progress, dispatch to the executor (Superpowers / vanilla). Trackbed does not implement.
+3. **Hand off** the phase, or one eligible story when the phase opts into story plans, after verifying its unique persisted plan. Trackbed does not implement.
 4. **Record progress + per-phase notes:** status plus narrative memory — what worked, what didn't, postponed/moved-to-another-phase, implementation notes, forward notes about future phases.
 5. **Runtime mutation:** new phases may emerge mid-roadmap (fix gaps/errors). Insert with decimal numbering; run the same create/link-ticket-ask flow; write keys back. The roadmap is a living document.
 6. **Authority:** single source of truth for where-we-are / what's-next / what's-done. The executor cannot override it; it always re-reads the roadmap.
