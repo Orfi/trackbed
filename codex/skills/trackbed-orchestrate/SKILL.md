@@ -50,6 +50,12 @@ Re-read the roadmap, then:
    - **todo** — not yet reachable (persisted status)
 3. **Surface what the current and next phases owe** — the `owes` list (gates not yet run, verification still outstanding). If a phase claims `done` but `owes` is non-empty, call that out.
 
+## Starting check — selected target only
+
+Apply this check after Step 3.1 selects the exact phase/story and before Step 3.2 verifies its plan or any status/dispatch change. Validate that selected target's preparation and plan at handoff. If equivalent GSD/spec/plan evidence already covers the current requirements, applicable constraints and test design, cite it and check only changed inputs; no new preflight file is required. If preparation is missing/stale, invoke **trackbed-preflight** for that exact phase/story to fill gaps. Never invoke the repository's preflight skill, inspect all future stories, redo environment setup or retro-gate completed phases.
+
+Preflight does not author the plan: missing/stale plans still go to trackbed-plan. Planning readiness does not satisfy an implementation approval boundary. Before dispatching, confirm the selected plan covers the current requirements and existing authorization applies; unresolved execution blockers or a materially changed/unapproved plan block only that target. Safe preparation/planning of another eligible target may continue.
+
 ## Step 3 — Hand off the phase or selected story
 
 1. For a phase with explicit story-plan targets, honor a requested eligible story; otherwise choose the first unfinished eligible story by preferred wave, breaking ties by roster order. A wave is a preference, not a hard blocker unless the roadmap says it is; a missing plan on an earlier story does not prevent choosing another eligible story. Do not select by plan filename or automatically hand off the entire phase. For a phase without such a roster, select the phase as before.

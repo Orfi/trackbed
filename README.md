@@ -24,7 +24,7 @@ You *could* try to stretch one plan across an entire application by treating eac
 
 Trackbed has two stages:
 
-1. **Initialization** (optional, run-once) — turns an epic or project into a roadmap through an ordered pipeline: an optional **PRD** (read or drafted), an optional **ADR** pass (read existing decisions, or gap-fill new ones — `read` / `read-create` / `skip`), the **roadmap** itself, and **tickets** where applicable. Skippable if a roadmap already exists.
+1. **Initialization** (optional, run-once) — prepares the epic/project once, then turns it into a roadmap through an ordered pipeline: an optional **PRD** (read or drafted), an optional **ADR** pass (read existing decisions, or gap-fill new ones — `read` / `read-create` / `skip`), the **roadmap** itself, and **tickets** where applicable. Skippable if a roadmap already exists.
 2. **Orchestration** (ongoing) — owns the roadmap + status + per-phase notes, computes the next unblocked phase, hands it to the executor, records progress, and absorbs runtime changes to the roadmap.
 
 ### Anchors
@@ -38,13 +38,14 @@ The anchor key names the working directory `.trackbed/<key>/`.
 
 ## Components
 
-One planning front door, two hidden internal skills, and a shared ADR specialist:
+One roadmap front door, internal orchestration gates, and shared planning/preparation specialists:
 
 | Skill | Invocability | Role |
 |---|---|---|
 | `trackbed` | **user-invocable** | Front door. Determine the anchor (epic/project), route to init or orchestrate. Pure dispatcher. |
 | `trackbed-init` | hidden (`user-invocable: false`) | One-time planning: PRD → ADR → roadmap → tickets, and lock the storage format. Skippable. |
 | `trackbed-orchestrate` | hidden (`user-invocable: false`) | Living roadmap + status + notes; compute next phase; hand off; record; absorb runtime mutations. |
+| `trackbed-preflight` | **user-invocable** (shared) | Epic/project or selected phase/story preparation; reuse equivalent planning evidence and fill gaps without implementation, setup or a second plan. |
 | `trackbed-plan` | **user-invocable** | Persist a phase plan, or one selected Jira story's plan when a phase opts into story plans. No phase → the current phase. |
 | `trackbed-sync` | **user-invocable** | Reconcile the planning layer and flag missing or ambiguous plans per phase or explicit story target. Read-reconcile only; invoked by orchestrate on material changes. |
 | `trackbed-adr` | **user-invocable** (shared) | Read existing ADRs, gap-fill new ones. Used by init, or run standalone on a story/epic/project that needs only ADRs — no roadmap required. |
@@ -65,6 +66,27 @@ The front door reads the anchor, checks for an existing roadmap under `.trackbed
 > A single Jira **story** has no roadmap — Trackbed does not apply to it. Stories go straight to execution; they may borrow `trackbed-adr` standalone for decision intake. `trackbed-adr` also runs standalone on an epic or project when you only want ADRs surfaced or created and aren't building a roadmap.
 
 One roadmap phase can contain several Jira stories. Add an explicit `Plan targets:` roster to its GSD roadmap entry (or `plan_targets:` in native mode) to opt into one persisted plan per story. For example, `/trackbed-plan 26 PANV-63211` authors only that story's plan; another story cannot borrow it. GSD plans retain numbered paths such as `.planning/phases/26-testing-validation/26-04-PLAN.md`, with `phase`, stable `plan`, and one `jira` key in frontmatter. Without an explicit roster, legacy phase-plan behavior is unchanged. Preferred waves guide order without renumbering plans or blocking unrelated eligible stories.
+
+## Where to start
+
+| Scope | Entry point | What happens |
+|---|---|---|
+| Entire Jira epic | `/trackbed DEMO-100` | Confirm the anchor; prepare the objective, constraints and dependencies once; create a roadmap if missing, otherwise resume it. |
+| Entire local project | `/trackbed acme-app` | Same flow from an agreed project brief; no Jira requirement. |
+| A phase | `/trackbed-plan 3` | Resolve phase 3, reuse/fill its preparation, persist one implementation plan and observe the applicable approval boundary. |
+| One story in an opted-in phase | `/trackbed-plan 3 DEMO-103` | Prepare/plan only that exact roster target; sibling evidence is not interchangeable. |
+| Preparation alone | `/trackbed-preflight DEMO-100` or `/trackbed-preflight DEMO-100 phase 3 story DEMO-103` | Check whole-anchor or selected-target readiness without advancing or implementing. |
+| Resume delivery | `/trackbed DEMO-100` | Re-read the roadmap, validate the selected unfinished target's preparation/plan/authorization, then hand off. |
+
+In Codex, mention the corresponding `$trackbed`, `$trackbed-plan` or `$trackbed-preflight` skill with the same arguments.
+
+**Preparation once, not another ceremony.** Trackbed's own preflight captures requirements and source revision, dependency/readiness facts, architecture/contract constraints, current behavior, semantic AC-to-test bindings and execution prerequisites. An existing GSD specification, Superpowers design/plan or other chosen planning-flow artifact that already covers those checks is reused by reference; only missing/changed inputs are refreshed. When a named planning tool has not run yet, let it produce its design/plan once, then check omissions rather than running a full preflight first. Storage in GSD mode alone does not prove readiness. Trackbed does not invoke a repository's preflight skill or require GSD.
+
+**Repository-independent.** Project instructions and supplied/configured pointers determine documents, tools, tracker policies, environments and commands. No prescribed source tree, language, test framework, sprint rule or credentials location. Whole-epic preparation is broad; phase/story preparation is detailed and scoped to the selected work. Existing PRD/ADR reads are reused, not repeated.
+
+**Small durable record.** Use an existing spec/plan and a compact reference in the anchor/phase note when sufficient. Otherwise keep the epic/project section in `.trackbed/<key>/preflight.md` and phase/story sections in the phase's existing note (fallback `.trackbed/<key>/notes/phase-<id>.md`), in either storage mode. No new required manifest field or separate evidence packet. Completed phases are not retro-gated.
+
+Preflight never installs dependencies, bootstraps runtime, runs tests/builds/DoD, changes Git/Jira, or approves implementation. It identifies commands and prerequisites; the authorized executor runs only what is needed. Missing execution prerequisites stay visible without blocking safe roadmap planning. Shared runtime setup is reused; per-worktree dependencies and deployment of changed code remain separate. Actual test results and DoD are recorded later, rather than predicted as passes.
 
 ## Visualization
 
@@ -150,22 +172,25 @@ claude/                       # Claude Code surface
     ├── trackbed-init/SKILL.md
     ├── trackbed-orchestrate/SKILL.md
     ├── trackbed-plan/SKILL.md
+    ├── trackbed-preflight/SKILL.md
     ├── trackbed-sync/SKILL.md
     ├── trackbed-adr/SKILL.md
     ├── trackbed-dod/SKILL.md
     └── trackbed-view/        # SKILL.md + roadmap-template.html (the viewer)
 opencode/                     # OpenCode surface (command only — skills shared with claude/)
-└── commands/trackbed.md      # shares claude/skills/ — trackbed-dod included automatically
+└── commands/trackbed.md      # shares claude/skills/ — trackbed-preflight and trackbed-dod included automatically
 copilot/                      # GitHub Copilot CLI surface (own skill copy, executor text adapted)
-└── skills/ (trackbed, trackbed-init, trackbed-orchestrate, trackbed-plan, trackbed-sync, trackbed-adr, trackbed-dod, trackbed-view)
+└── skills/ (trackbed, trackbed-init, trackbed-orchestrate, trackbed-plan, trackbed-preflight, trackbed-sync, trackbed-adr, trackbed-dod, trackbed-view)
 codex/                        # OpenAI Codex CLI surface (own skill copy, executor text adapted)
-└── skills/ (trackbed, trackbed-init, trackbed-orchestrate, trackbed-plan, trackbed-sync, trackbed-adr, trackbed-dod, trackbed-view)
+└── skills/ (trackbed, trackbed-init, trackbed-orchestrate, trackbed-plan, trackbed-preflight, trackbed-sync, trackbed-adr, trackbed-dod, trackbed-view)
 viz/roadmap.html              # the roadmap viewer template (sample data, opens standalone)
 install.sh                    # installer — macOS / Linux / Git Bash / WSL
 install.ps1                   # installer — Windows PowerShell / pwsh (identical behavior)
 ```
 
-Claude Code and OpenCode share one skill source (`claude/skills/`) — only the command file format differs. Copilot CLI keeps its **own** copy (`copilot/skills/`) because its executor differs and, in Copilot, a skill *is* its slash command — so there is no command file. Codex CLI keeps its **own** copy (`codex/skills/`) for the same reason — the executor differs and, in Codex, a skill is its own entry point (selected via `/skills` or `$`), so there is no command file there either.
+Claude Code and OpenCode share one skill source (`claude/skills/`) — only the command file format differs. An OpenCode-only install that finds an existing Claude skill home refreshes that shared home, including new skills, rather than retaining stale copies.
+
+Copilot CLI keeps its **own** copy (`copilot/skills/`) because its executor differs and, in Copilot, a skill *is* its slash command — so there is no command file. Codex CLI keeps its **own** copy (`codex/skills/`) for the same reason — the executor differs and, in Codex, a skill is its own entry point (selected via `/skills` or `$`), so there is no command file there either.
 
 ### Where things land
 

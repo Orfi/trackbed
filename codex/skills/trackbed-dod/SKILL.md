@@ -14,6 +14,10 @@ You are the phase-transition gate for one Trackbed roadmap. Your job is to verif
 
 This is an internal skill. It is invoked by `trackbed-orchestrate` before it marks a phase `done` and advances. It may also be invoked directly with a phase id for a mid-phase dry-run — the stamp is always current truth and is always written, never suppressed.
 
+## Preparation evidence reuse
+
+Read the selected target's preflight/spec/plan reference for its requirements source, constraints and clause-to-test design when auditing the existing checks. Reuse this preparation; do not invoke preflight again or demand a new packet. Planned bindings/expected RED are not observed test evidence and never satisfy the gate on their own. Freshness and actual results remain governed by the DoD evidence rules below.
+
 ## Non-negotiables
 
 - **Evidence, not assertion.** Every check produces a count, a filename, a grep result, or a command summary — recorded in the per-phase note. "Looks fine" is not evidence; unverifiable = red.

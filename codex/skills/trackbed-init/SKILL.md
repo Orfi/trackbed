@@ -57,6 +57,12 @@ Record the confirmed value in the manifest as `shape`. The shape changes how Ste
 - **`populated`** (epic anchor only) — existing stories become the phases (Step 3 imports + orders them; Step 4 is link-only by default, create only when discussed).
 - **`greenfield`** — phases are generated from the PRD + ADRs / from the user (Step 3 produces them; Step 4 is the create/link-ask, which is *optional* under a project anchor).
 
+## Step 0b — Prepare the epic/project once
+
+Invoke **trackbed-preflight** for `<key>` at epic/project scope before drafting the roadmap. It owns the starting checks: objective and requirements source, existing child/dependency facts, cross-cutting constraints and verification/environment references. Pass already-read tracker/brief facts; reuse matching existing planning-flow artifacts rather than making a second packet. Do not invoke the repository's preflight skill. Resolve planning blockers; retain child/execution blockers for dependency-aware ordering instead of blocking the whole epic.
+
+Steps 1–2 below enrich those inputs with the chosen PRD/ADR work; reuse existing references and refresh only actual gaps before Step 3. Preflight must not force PRD/ADR creation or undo the selected ADR mode. For a greenfield project, an agreed brief is sufficient to begin this preparation; no Jira access is required.
+
 ## Step 1 — PRD: read, create, or skip
 
 **Project anchor:** a PRD is optional. Ask the user whether they want one; if not, leave `prd_path` absent and go to Step 2. If yes, draft it from their description (step 3 below).

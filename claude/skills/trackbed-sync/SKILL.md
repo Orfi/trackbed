@@ -40,6 +40,10 @@ For each phase that is `current` or `todo`-and-reachable:
 
 This is a read-only plan audit within the reconcile. Do **not** author plans here; `trackbed-plan` owns all plan writing. A failed or ambiguous sync must not advance a phase or erase a plan.
 
+### Preparation references
+
+During the existing plan audit, check referenced preflight/spec artifacts for exact target identity and known requirement/scope changes. Flag missing or known-stale preparation and obsolete approval scope; point to trackbed-plan (or trackbed-preflight for preparation alone). A complete existing GSD/spec/plan is valid without a separate preflight file. Do not run preflight, fetch every tracker issue, author preparation/plans or retro-gate done phases during sync. Unknown freshness is reported honestly, not invented as a pass.
+
 ## Step 4 — Report
 
 Print a one-line summary of what changed (which files were refreshed, any plan gaps flagged), so the reconcile is auditable rather than silent.

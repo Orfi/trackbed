@@ -45,7 +45,7 @@ OPENCODE_CMDS="${XDG_CONFIG_HOME:-$HOME/.config}/opencode/commands"
 COPILOT_SKILLS="$HOME/.copilot/skills"      # Copilot's own home — no command file
 CODEX_SKILLS="${CODEX_HOME:-$HOME/.codex}/skills"   # Codex's own home — no command file
 
-SKILLS=(trackbed trackbed-init trackbed-orchestrate trackbed-plan trackbed-sync trackbed-adr trackbed-dod trackbed-view)
+SKILLS=(trackbed trackbed-init trackbed-orchestrate trackbed-plan trackbed-preflight trackbed-sync trackbed-adr trackbed-dod trackbed-view)
 
 LINK=0
 MODE="install"
@@ -185,7 +185,8 @@ elif [ "$WANT_OC" -eq 1 ]; then
   # OpenCode only. If a Claude install already exists, reuse it (OpenCode reads it).
   if have_skills_in "$CLAUDE_SKILLS"; then
     say "Found existing skills in ~/.claude/skills — OpenCode reads that path natively,"
-    say "so skills are left there (not duplicated under OpenCode)."
+    say "so the shared skills are refreshed there (not duplicated under OpenCode)."
+    install_skills_to "$CLAUDE_SKILLS"
   else
     install_skills_to "$OPENCODE_SKILLS"
   fi

@@ -6,6 +6,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- Repository-independent `trackbed-preflight` for epic/project and selected phase/story preparation on Claude Code, OpenCode, Copilot CLI and Codex CLI.
+- Explicit whole-roadmap and per-phase/story starting points, reuse of equivalent GSD/planning artifacts, scoped refresh and compact readiness references.
+
+### Changed
+- Init, plan, orchestrate, sync and DoD integrate preparation without invoking repository preflight skills, duplicating plans/setup or retro-gating completed phases. Both installers include the new shared skill and refresh an existing shared Claude skill home when installing for OpenCode only.
+
+
 Spec amendment (2026-07-18): DoD phase-transition gate and the hooks policy.
 Gate amendment (2026-07-30): evidence ledger, and doc-comment checking made
 diff-conditional rather than tool-conditional.

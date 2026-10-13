@@ -34,10 +34,18 @@ If the selected target already has a plan, stop and ask which to do — take no 
 - **Overwrite** — regenerate from scratch (back up the existing plan first).
 - Or follow a free-text instruction the user gives instead.
 
+## Step 2b — Prepare the selected target without duplication
+
+Before authoring or adopting the selected plan, use **trackbed-preflight** for the exact anchor/phase/story to reuse matching requirements, architecture, discovery and acceptance-design artifacts and fill only gaps. This is Trackbed's own check, not a call to the repository preflight. Respect Abort/Update/Overwrite above before changing any existing plan or preparation section.
+
+If the chosen planning tool already supplies these checks, adopt its evidence by reference; do not run a second preparation flow. If a named tool has no output yet, give it the resolved requirements/source and target in Step 3 and let its preparation/planning flow run once; defer Trackbed's detailed gap check until that output returns. Fill only omissions before persisting/adopting the plan, not a full duplicate preflight before the tool starts. Resolve planning blockers before claiming a usable plan; execution-only blockers remain explicit prerequisites, so safe planning can continue. No source changes or environment setup occur here.
+
 ## Step 3 — Author the plan
 
 - **Simple mode (default):** draft from the roadmap's `scope` and `done` criteria. In story mode, also use that story's actual acceptance criteria; if the roadmap/Jira detail is insufficient, ask instead of copying the entire phase scope into one story.
 - **Tool mode ("… using <tool>"):** the tool name comes from the prompt, never a fixed argument, so Trackbed stays tool-neutral. If the tool's planning output for this phase already exists in the tool's own repo planning folder, adopt it; if it does not, run that tool's planning flow to produce it, then adopt. Map the result into the tracked plan format.
+
+Include the selected preflight/spec reference and requirements revision in the plan, preserve clause-to-test bindings, record execution blockers and the next test-first action, and present the concrete plan for approval when required. Reuse already granted authorization within its exact scope; readiness alone grants none. If requirements materially change on resume, reconcile the affected plan and approval scope before implementation.
 
 Write no sibling plan files. In the selected plan, set the exact `phase`, stable `plan`, and single `jira` binding in story mode; do not renumber existing files. Refresh the state file and roadmap note for that target so the planning layer reflects the new plan; the orchestration loop keeps everything else in sync.
 

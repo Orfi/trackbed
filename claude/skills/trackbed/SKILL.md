@@ -71,6 +71,12 @@ Decide the branch:
 - **No roadmap and no manifest** → never planned. Invoke **trackbed-init** (passing the `anchor` and `key`) to build the roadmap and lock the format switch. When init returns, invoke **trackbed-orchestrate**.
 - **Roadmap exists** (manifest and/or roadmap present, or the user chose "skip to orchestration") → skip init. Invoke **trackbed-orchestrate** directly. If a manifest is missing, `trackbed-orchestrate` will detect format from the files present and confirm with the user before writing one.
 
+## Starting points
+
+- **Entire epic/project:** start here with `/trackbed <key>` (Codex: `$trackbed`). New roadmaps go through init's Trackbed-owned preflight before roadmap creation. Existing roadmaps resume through orchestration, which checks only missing/stale preparation for the selected unfinished target.
+- **Phase/story planning:** `/trackbed-plan <phase> [story-key]` resolves the target, reuses equivalent preparation or calls trackbed-preflight to fill gaps, then persists the plan once. `/trackbed-preflight <key> phase <id> [story <issue-key>]` is available for preparation alone; it does not advance the roadmap.
+- Preparation covered by the selected planning flow (including GSD) is credited by reference. No repository preflight skill is invoked. Do not require a separate readiness ceremony when existing scope-bound evidence is sufficient.
+
 ## Step 3 — Dispatch and get out of the way
 
 - Hand control to the chosen internal skill(s): `trackbed-init` (only when nothing exists), then `trackbed-orchestrate`.

@@ -57,7 +57,7 @@ $CopilotSkills = Join-Path $Home_ '.copilot/skills'         # Copilot's own home
 $CodexHome     = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $Home_ '.codex' }
 $CodexSkills   = Join-Path $CodexHome 'skills'               # Codex's own home — no command file
 
-$Skills = @('trackbed','trackbed-init','trackbed-orchestrate','trackbed-plan','trackbed-sync','trackbed-adr','trackbed-dod','trackbed-view')
+$Skills = @('trackbed','trackbed-init','trackbed-orchestrate','trackbed-plan','trackbed-preflight','trackbed-sync','trackbed-adr','trackbed-dod','trackbed-view')
 
 # --- helpers -----------------------------------------------------------------
 
@@ -179,7 +179,8 @@ elseif ($WantOC) {
     # OpenCode only. If a Claude install already exists, reuse it (OpenCode reads it).
     if (Test-SkillsIn $ClaudeSkills) {
         Say 'Found existing skills in ~/.claude/skills - OpenCode reads that path natively,'
-        Say 'so skills are left there (not duplicated under OpenCode).'
+        Say 'so the shared skills are refreshed there (not duplicated under OpenCode).'
+        Install-SkillsTo $ClaudeSkills
     } else {
         Install-SkillsTo $OpencodeSkills
     }
