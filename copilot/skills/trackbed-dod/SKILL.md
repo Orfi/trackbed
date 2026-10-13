@@ -80,10 +80,20 @@ Run in order. Each check must produce evidence; record it as you go. **Before ru
 
 ### Check 1 — Phase `done:` criteria
 
-Read the phase's `done:` field from the roadmap. Verify each criterion item-by-item against reality (files, tests, notes, tickets — whatever the criterion points at). The heart of the gate; never invent criteria.
+Read the phase's `done:` field and approved requirements from its persisted plan/spec. Verify every criterion, including each clause of a compound AC; never infer requirements from the implementation.
 
-- **Pass:** every criterion is demonstrably met with evidence.
-- **Fail:** any criterion unmet or unverifiable.
+**AC freshness.** For Jira-backed work, fetch the applicable issue(s) once before final completion and compare the actual AC text with the approved register. Reuse that capture throughout the same review; report or metadata corrections do not require another fetch. Record the current issue revision, but an unrelated Jira edit does not invalidate evidence for unchanged ACs. Added or changed clauses require evidence review for those clauses; report the requirement change and hand it back to planning rather than silently rewriting the contract. For work without Jira, use the approved plan/spec; do not introduce a Jira requirement.
+
+**AC evidence table.** In the same `## DoD` note, map every AC clause to its test, meaningful assertion, recorded result and binding:
+
+| AC / clause | Test and assertion citation | Recorded result | Binding |
+|---|---|---|---|
+| AC-1 / required outcome | test file + test name + assertion proving the outcome | passed; output artifact | DIRECT |
+
+Use `DIRECT`, `PARTIAL`, `INDIRECT` or `UNBOUND`; only `DIRECT` satisfies a behavioral AC. A compound AC may need multiple rows, including required roles, exclusions and negative conditions. Browser-visible behavior needs browser evidence; unit/API tests can support it but do not replace the browser assertion. Page-load, element-exists, click-only or no-error assertions do not prove a semantic outcome. Negative assertions must show the relevant action was processed, rather than pass because nothing happened. For non-executable deliverables, cite the artifact and the direct inspection instead of inventing a test. Recover and inspect existing evidence before running anything new.
+
+- **Pass:** every current criterion is demonstrably met; behavioral clauses have direct semantic evidence.
+- **Fail:** any criterion unmet, changed without reviewed evidence, or only partially/indirectly bound.
 
 ### Check 2 — Tests
 
@@ -95,6 +105,8 @@ Otherwise run the full suite using the resolved `test` command (see *Resolving t
 - **Fail:** any test failure, any error, or any inability to run or recover the suite result.
 
 Record the summary line verbatim.
+
+**Test effectiveness.** Inspect whether an important assertion would reject materially incorrect behavior. Reuse recorded, requirement-bearing TDD RED/GREEN evidence where available; do not manufacture another RED cycle just for DoD. Missing historical RED is not itself a blocker when the assertion and existing evidence directly establish the requirement. If an important assertion's effectiveness remains doubtful, use the smallest focused test or control that resolves that specific doubt and record the outcome. A controlled mutation is optional, never mandatory per AC; it must respect project execution permissions and restore the affected files exactly before proceeding. Do not run a full mutation campaign or repeat unaffected suites.
 
 ### Check 3 — Build / lint clean
 
@@ -114,10 +126,12 @@ Read the phase's `owes:` list. Verify each item — ADR amendments filed, covera
 
 ### Check 5 — Scope check
 
-Inspect the diff for this phase (e.g. `git diff <phase-start-sha>..HEAD` — use the phase's start point from the notes or roadmap). Verify that changes touch only what the phase's `scope:` field describes.
+Inspect the actual diff for this phase (e.g. `git diff <phase-start-sha>..HEAD` — use the phase's start point from the notes or roadmap). Verify that changes touch only what the phase's `scope:` field describes.
 
-- **Pass:** diff is within scope.
-- **Fail:** diff contains changes outside the phase scope. List them; do not silently accept them. Adjacent improvements spotted here are a fail until explicitly noted or reverted.
+**Architecture conformance.** Confirm the diff respects applicable domain boundaries, event/API contracts and recorded ADR decisions. Reuse an existing code review that covers those constraints and the actual change; record its citation once. If coverage is missing, inspect only the affected constraints and code paths. Do not invent architecture rules where none exist, start an unrelated refactor, or require a second independent review merely because this is DoD.
+
+- **Pass:** diff is within scope and conforms to applicable constraints.
+- **Fail:** an out-of-scope change or unresolved architecture/contract violation. List it with a concrete diff/constraint citation; do not silently accept adjacent improvements.
 
 ### Check 6 — Commits clean
 
@@ -210,6 +224,7 @@ Under the phase's notes section (or in `.trackbed/<key>/notes/<phase-id>.md`), r
 ## DoD
 
 **Run:** <date>  **Result:** green | red | waived  **HEAD:** a1b2c3d
+**Requirements:** pass | fail | waived  **Engineering:** pass | fail | waived
 
 | # | Check | Result | sha | Evidence |
 |---|-------|--------|-----|----------|
@@ -223,8 +238,13 @@ Under the phase's notes section (or in `.trackbed/<key>/notes/<phase-id>.md`), r
 | 8 | doc comments | pass (prior run) | a1b2c3d | xml-docs skill — 12/12 members documented |
 | 9 | security | skipped (unavailable) | — | /security-review not in session, no prior run |
 
+**AC evidence:** table from check 1, or a citation to an existing table reviewed in this run.
+**Architecture:** applicable constraints and the existing review/diff citation from check 5.
+**Test effectiveness:** existing RED/GREEN citation or assertion assessment; any focused check performed and why.
 **Blockers:** none  *(or list them)*
 ```
+
+Keep **requirements** and **engineering** verdicts separate: passing build/test/lint/security does not establish AC fulfillment, and AC fulfillment does not settle engineering failures. Requirements follows check 1; engineering covers applicable test, build/lint, architecture, documentation and security results. The overall gate still requires every applicable check, including planning and commit checks, to pass or be explicitly waived. Retain skipped checks and their limits. Write this assessment in the existing note and compact stamp; do not create an adjudication packet, mandate a new independent worker, or invoke another complete DoD to obtain these added checks. Check 10 remains conditional on its explicit verification contract.
 
 The `sha` column **is** the ledger. An entry whose sha != the `HEAD` line is stale and must be re-verified, never carried forward. `pass (prior run)` marks evidence you credited rather than produced; cite where it came from.
 
