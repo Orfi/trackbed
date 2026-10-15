@@ -77,6 +77,8 @@ Decide the branch:
 - **Phase/story planning:** `/trackbed-plan <phase> [story-key]` resolves the target, reuses equivalent preparation or calls trackbed-preflight to fill gaps, then persists the plan once. `/trackbed-preflight <key> phase <id> [story <issue-key>]` is available for preparation alone; it does not advance the roadmap.
 - Preparation covered by the selected planning flow (including GSD) is credited by reference. No repository preflight skill is invoked. Do not require a separate readiness ceremony when existing scope-bound evidence is sufficient.
 
+- **Completed roadmap:** `/trackbed-cleanup <key> backup <absolute-directory>` (Codex: `$trackbed-cleanup`) archives and removes the completed roadmap's confirmed internal artifacts. Orchestration offers it after completion; removal requires an explicit preview confirmation and never commits automatically.
+
 ## Step 3 — Dispatch and get out of the way
 
 - Hand control to the chosen internal skill(s): `trackbed-init` (only when nothing exists), then `trackbed-orchestrate`.

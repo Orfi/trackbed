@@ -50,6 +50,10 @@ Re-read the roadmap, then:
    - **todo** — not yet reachable (persisted status)
 3. **Surface what the current and next phases owe** — the `owes` list (gates not yet run, verification still outstanding). If a phase claims `done` but `owes` is non-empty, call that out.
 
+## Roadmap complete — offer final cleanup
+
+When Step 2 finds every phase done, verify all in-scope stories and owed items are settled and gate records meet the existing DoD rules, including grandfathering. No next unblocked phase is insufficient when blocked or unfinished work remains. After the final status/notes update and `trackbed-sync`, offer **trackbed-cleanup** for this key as the final lifecycle step. It archives and previews removal; destructive execution requires its explicit confirmation. Declining cleanup leaves the completed roadmap intact. Do not invoke cleanup for a single completed phase or remove scaffolding yourself. Once cleanup succeeds, stop; do not sync, regenerate the removed directory, or reinitialize the roadmap.
+
 ## Starting check — selected target only
 
 Apply this check after Step 3.1 selects the exact phase/story and before Step 3.2 verifies its plan or any status/dispatch change. Validate that selected target's preparation and plan at handoff. If equivalent GSD/spec/plan evidence already covers the current requirements, applicable constraints and test design, cite it and check only changed inputs; no new preflight file is required. If preparation is missing/stale, invoke **trackbed-preflight** for that exact phase/story to fill gaps. Never invoke the repository's preflight skill, inspect all future stories, redo environment setup or retro-gate completed phases.
@@ -163,4 +167,4 @@ Under a `project` anchor where the user opted out of Jira, an empty `jira:` is t
 
 ## Lifecycle reminder
 
-`.trackbed/` (and `.planning/`) is scaffolding, not a deliverable — noise to a code reviewer. **Keep it git-tracked through development; never gitignore it** (an untracked dir is liable to be deleted as noise). It is removed **manually at the very end**, just before the final PR — a one-off delete, not an automated step Trackbed performs. Durable, team-facing outputs that survive the PR: the code, the PRD, the ADRs, and the Jira tickets.
+Keep internal planning artifacts git-tracked through development. After the whole roadmap is complete, offer **trackbed-cleanup** to archive and remove only its confirmed artifacts before the final PR. Other roadmaps, shared planning files, code, PRDs, ADRs and Jira tickets survive. Cleanup owns the preview, backup and removal; orchestration never deletes these files itself.

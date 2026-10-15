@@ -22,10 +22,11 @@ You *could* try to stretch one plan across an entire application by treating eac
 
 ## How it works
 
-Trackbed has two stages:
+Trackbed has two delivery stages, followed by optional final cleanup:
 
 1. **Initialization** (optional, run-once) — prepares the epic/project once, then turns it into a roadmap through an ordered pipeline: an optional **PRD** (read or drafted), an optional **ADR** pass (read existing decisions, or gap-fill new ones — `read` / `read-create` / `skip`), the **roadmap** itself, and **tickets** where applicable. Skippable if a roadmap already exists.
 2. **Orchestration** (ongoing) — owns the roadmap + status + per-phase notes, computes the next unblocked phase, hands it to the executor, records progress, and absorbs runtime changes to the roadmap.
+3. **Cleanup** (after completion) — offers `trackbed-cleanup` to archive and remove the completed roadmap's confirmed internal artifacts before the final PR. Removal needs explicit confirmation and leaves changes uncommitted.
 
 ### Anchors
 
@@ -50,6 +51,7 @@ One roadmap front door, internal orchestration gates, and shared planning/prepar
 | `trackbed-sync` | **user-invocable** | Reconcile the planning layer and flag missing or ambiguous plans per phase or explicit story target. Read-reconcile only; invoked by orchestrate on material changes. |
 | `trackbed-adr` | **user-invocable** (shared) | Read existing ADRs, gap-fill new ones. Used by init, or run standalone on a story/epic/project that needs only ADRs — no roadmap required. |
 | `trackbed-view` | **user-invocable** | Open the roadmap viewer in the browser — regenerates a self-contained HTML page (phase board + rail + dependency graph) from the live roadmap, then opens it. Read-only. |
+| `trackbed-cleanup` | **user-invocable** | Final completed-roadmap cleanup: preview selected paths, verify a unique external archive, confirm removal, and leave tracked deletions staged without committing. |
 | `trackbed-dod` | hidden (`user-invocable: false`) | Phase-transition gate: verifies the outgoing phase's DoD checklist with evidence and writes the gate stamp. |
 
 ## Usage
@@ -116,11 +118,13 @@ Phases are walked in **dotted-segment id order** (like version numbers): `3 → 
 2. **Firewall.** Team-facing outputs (Jira tickets, PRD, ADRs) stay framework-neutral — plain domain language, no GSD/Trackbed vocabulary, no `.planning/` or `.trackbed/` paths. The phase↔ticket mapping never leaks into Jira.
 3. **Always ask before writing to Jira.** Never auto-create or auto-link a ticket. Under a `project` anchor, Jira may be unused entirely.
 4. **Skills-first.** No required scripts, no Python dependencies. Hooks are permitted as an optional freshness layer only — never enforcing anything; Trackbed is fully usable with no hooks installed. The roadmap file is the single source of truth and is always re-read, never trusted from stale memory.
-5. **One front door for planning.** `trackbed` is the planning entry point; `trackbed-init` and `trackbed-orchestrate` are hidden (`user-invocable: false`) and reached only through it. `trackbed-adr` is the exception — user-invocable and runnable standalone.
+5. **One front door for planning.** `trackbed` is the planning entry point; `trackbed-init` and `trackbed-orchestrate` are hidden (`user-invocable: false`) and reached only through it. Preparation/planning specialists (`trackbed-preflight`, `trackbed-plan`, `trackbed-adr`), reconciliation/viewing (`trackbed-sync`, `trackbed-view`), and completed-roadmap cleanup (`trackbed-cleanup`) are user-invocable without advancing delivery.
 
 ## Lifecycle
 
-`.trackbed/` (and `.planning/`) is internal scaffolding — noise to a code reviewer. It **stays git-tracked through development** (never gitignored — an untracked dir is liable to be deleted as noise) and is **removed manually at the very end**, just before the final PR.
+`.trackbed/` (and `.planning/`) is internal scaffolding — noise to a code reviewer. It **stays git-tracked through development** (never gitignored — an untracked dir is liable to be deleted as noise) and is archived and removed through **trackbed-cleanup** after roadmap completion, before the final PR. Orchestration offers cleanup after all phases/stories and owed gates are settled. Removal requires explicit confirmation; it never runs merely because a phase finished.
+
+Use `/trackbed-cleanup <key> backup <absolute-directory>` (Codex: `$trackbed-cleanup`). Default scope is `.trackbed/<key>/`; shared directories and other roadmaps are preserved. Optional manifest `cleanup.backup_root` supplies the external archive destination and `cleanup.paths` lists exact extra paths, subject to ownership checks. No other kit or helper-files pointer is required. Each run uses a unique archive with verified file hashes and a recovery record, including required referenced planning/evidence artifacts. Tracked removals are staged for review; cleanup does not commit, push, merge or erase earlier Git history.
 
 **Durable / team-facing** (survive the PR): the code, the PRD, the ADRs, and the Jira tickets.
 
@@ -175,14 +179,15 @@ claude/                       # Claude Code surface
     ├── trackbed-preflight/SKILL.md
     ├── trackbed-sync/SKILL.md
     ├── trackbed-adr/SKILL.md
+    ├── trackbed-cleanup/SKILL.md
     ├── trackbed-dod/SKILL.md
     └── trackbed-view/        # SKILL.md + roadmap-template.html (the viewer)
 opencode/                     # OpenCode surface (command only — skills shared with claude/)
-└── commands/trackbed.md      # shares claude/skills/ — trackbed-preflight and trackbed-dod included automatically
+└── commands/trackbed.md      # shares claude/skills/ — trackbed-preflight, trackbed-dod and trackbed-cleanup included automatically
 copilot/                      # GitHub Copilot CLI surface (own skill copy, executor text adapted)
-└── skills/ (trackbed, trackbed-init, trackbed-orchestrate, trackbed-plan, trackbed-preflight, trackbed-sync, trackbed-adr, trackbed-dod, trackbed-view)
+└── skills/ (trackbed, trackbed-init, trackbed-orchestrate, trackbed-plan, trackbed-preflight, trackbed-sync, trackbed-adr, trackbed-dod, trackbed-cleanup, trackbed-view)
 codex/                        # OpenAI Codex CLI surface (own skill copy, executor text adapted)
-└── skills/ (trackbed, trackbed-init, trackbed-orchestrate, trackbed-plan, trackbed-preflight, trackbed-sync, trackbed-adr, trackbed-dod, trackbed-view)
+└── skills/ (trackbed, trackbed-init, trackbed-orchestrate, trackbed-plan, trackbed-preflight, trackbed-sync, trackbed-adr, trackbed-dod, trackbed-cleanup, trackbed-view)
 viz/roadmap.html              # the roadmap viewer template (sample data, opens standalone)
 install.sh                    # installer — macOS / Linux / Git Bash / WSL
 install.ps1                   # installer — Windows PowerShell / pwsh (identical behavior)

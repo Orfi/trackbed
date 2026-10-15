@@ -45,7 +45,7 @@ OPENCODE_CMDS="${XDG_CONFIG_HOME:-$HOME/.config}/opencode/commands"
 COPILOT_SKILLS="$HOME/.copilot/skills"      # Copilot's own home — no command file
 CODEX_SKILLS="${CODEX_HOME:-$HOME/.codex}/skills"   # Codex's own home — no command file
 
-SKILLS=(trackbed trackbed-init trackbed-orchestrate trackbed-plan trackbed-preflight trackbed-sync trackbed-adr trackbed-dod trackbed-view)
+SKILLS=(trackbed trackbed-init trackbed-orchestrate trackbed-plan trackbed-preflight trackbed-sync trackbed-adr trackbed-dod trackbed-cleanup trackbed-view)
 
 LINK=0
 MODE="install"

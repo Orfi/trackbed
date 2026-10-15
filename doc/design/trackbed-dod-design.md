@@ -66,8 +66,10 @@ criteria live disconnected from the phase record. The `/dod` skill the feedback 
   none of it. Resolution: contract → obvious repo convention → **ask once and offer to record**. Never
   invent a command, never guess twice. Unresolvable-but-applicable ⇒ red; no subject at all ⇒
   `skipped (n/a)`.
-- **D9 — Out of scope.** PR creation/gating, `.trackbed/` strip automation, enforcement hooks,
-  git-derived status sync (parked — independent of the gate).
+- **D9 — Out of scope.** PR creation/gating, enforcement hooks, and git-derived status sync
+  (parked — independent of the gate). **Amended 2026-10-15:** final cleanup is now owned by
+  `trackbed-cleanup`, offered after roadmap completion, with explicit removal confirmation and
+  a verified external archive. Cleanup is separate from DoD and never commits automatically.
 - **D10 — Packaging.** Ships in all four agent variants (`claude/`, `opencode/` — skills shared;
   `copilot/`, `codex/` — each an adapted skill copy), both installers (`install.sh`, `install.ps1`),
   README skill list, CHANGELOG.

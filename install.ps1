@@ -57,7 +57,7 @@ $CopilotSkills = Join-Path $Home_ '.copilot/skills'         # Copilot's own home
 $CodexHome     = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $Home_ '.codex' }
 $CodexSkills   = Join-Path $CodexHome 'skills'               # Codex's own home — no command file
 
-$Skills = @('trackbed','trackbed-init','trackbed-orchestrate','trackbed-plan','trackbed-preflight','trackbed-sync','trackbed-adr','trackbed-dod','trackbed-view')
+$Skills = @('trackbed','trackbed-init','trackbed-orchestrate','trackbed-plan','trackbed-preflight','trackbed-sync','trackbed-adr','trackbed-dod','trackbed-cleanup','trackbed-view')
 
 # --- helpers -----------------------------------------------------------------
 
